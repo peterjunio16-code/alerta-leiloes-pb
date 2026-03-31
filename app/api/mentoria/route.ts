@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { formatPhone } from "@/lib/utils";
+import { sendWhatsAppMessage } from "@/lib/whatsapp/client";
+import { getMentoriaAdminAlert } from "@/lib/whatsapp/messages";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,8 +35,11 @@ export async function POST(request: NextRequest) {
       respostas,
     });
 
-    // TODO (Task 10): Notify admin via WhatsApp
-    // sendWhatsAppMessage(adminNumber, getMentoriaAdminAlert(respostas)).catch(console.error)
+    // Notify admin via WhatsApp (non-blocking)
+    const adminNumber = process.env.WHATSAPP_ADMIN_NUMBER;
+    if (adminNumber) {
+      sendWhatsAppMessage(adminNumber, getMentoriaAdminAlert(respostas)).catch(console.error);
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

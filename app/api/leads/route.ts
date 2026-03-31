@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { formatPhone } from "@/lib/utils";
+import { sendWhatsAppMessage } from "@/lib/whatsapp/client";
+import { getBoasVindas } from "@/lib/whatsapp/messages";
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,8 +37,8 @@ export async function POST(request: NextRequest) {
       diasSequencia.map((dia) => ({ lead_id: lead.id, dia }))
     );
 
-    // Fire-and-forget: send welcome WhatsApp (will be implemented in Task 10)
-    // sendWhatsAppMessage(phone, getBoasVindas(nome)).catch(console.error);
+    // Send welcome WhatsApp message (non-blocking)
+    sendWhatsAppMessage(phone, getBoasVindas(nome)).catch(console.error);
 
     return NextResponse.json({ success: true, leadId: lead.id });
   } catch (err) {
