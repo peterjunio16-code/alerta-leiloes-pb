@@ -1,0 +1,182 @@
+export type Database = {
+  public: {
+    Tables: {
+      leads: {
+        Row: {
+          id: string;
+          nome: string;
+          whatsapp: string;
+          origem: "grupo" | "radar" | "mentoria";
+          status: "novo" | "nutrição" | "cliente" | "inativo";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          nome: string;
+          whatsapp: string;
+          origem?: "grupo" | "radar" | "mentoria";
+          status?: "novo" | "nutrição" | "cliente" | "inativo";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          nome?: string;
+          whatsapp?: string;
+          origem?: "grupo" | "radar" | "mentoria";
+          status?: "novo" | "nutrição" | "cliente" | "inativo";
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      imoveis: {
+        Row: {
+          id: string;
+          titulo: string;
+          cidade: string;
+          bairro: string | null;
+          valor_avaliacao: number | null;
+          lance_inicial: number;
+          desconto: number | null;
+          score: number | null;
+          status: "pendente" | "publicado" | "encerrado";
+          link: string | null;
+          data_leilao: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          titulo: string;
+          cidade: string;
+          bairro?: string | null;
+          valor_avaliacao?: number | null;
+          lance_inicial: number;
+          desconto?: number | null;
+          score?: number | null;
+          status?: "pendente" | "publicado" | "encerrado";
+          link?: string | null;
+          data_leilao?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          titulo?: string;
+          cidade?: string;
+          bairro?: string | null;
+          valor_avaliacao?: number | null;
+          lance_inicial?: number;
+          desconto?: number | null;
+          score?: number | null;
+          status?: "pendente" | "publicado" | "encerrado";
+          link?: string | null;
+          data_leilao?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      assinantes_radar: {
+        Row: {
+          id: string;
+          lead_id: string | null;
+          data_inicio: string;
+          status: "ativo" | "cancelado" | "inadimplente";
+          hotmart_subscriber_code: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lead_id?: string | null;
+          data_inicio?: string;
+          status?: "ativo" | "cancelado" | "inadimplente";
+          hotmart_subscriber_code?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          lead_id?: string | null;
+          data_inicio?: string;
+          status?: "ativo" | "cancelado" | "inadimplente";
+          hotmart_subscriber_code?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      aplicacoes_mentoria: {
+        Row: {
+          id: string;
+          lead_id: string | null;
+          nome: string;
+          whatsapp: string;
+          participou_leilao: boolean;
+          orcamento: string | null;
+          trava: string | null;
+          status: "pendente" | "contatado" | "aprovado" | "rejeitado";
+          respostas: Record<string, unknown> | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lead_id?: string | null;
+          nome: string;
+          whatsapp: string;
+          participou_leilao?: boolean;
+          orcamento?: string | null;
+          trava?: string | null;
+          status?: "pendente" | "contatado" | "aprovado" | "rejeitado";
+          respostas?: Record<string, unknown> | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          lead_id?: string | null;
+          nome?: string;
+          whatsapp?: string;
+          participou_leilao?: boolean;
+          orcamento?: string | null;
+          trava?: string | null;
+          status?: "pendente" | "contatado" | "aprovado" | "rejeitado";
+          respostas?: Record<string, unknown> | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      sequencias_nutricao: {
+        Row: {
+          id: string;
+          lead_id: string;
+          dia: number;
+          enviado: boolean;
+          enviado_em: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lead_id: string;
+          dia: number;
+          enviado?: boolean;
+          enviado_em?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          lead_id?: string;
+          dia?: number;
+          enviado?: boolean;
+          enviado_em?: string | null;
+          created_at?: string;
+        };
+      };
+    };
+    Views: {};
+    Functions: {};
+    Enums: {};
+    CompositeTypes: {};
+  };
+};
