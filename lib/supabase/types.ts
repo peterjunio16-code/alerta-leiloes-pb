@@ -1,3 +1,5 @@
+export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+
 export type Database = {
   public: {
     Tables: {
@@ -6,8 +8,8 @@ export type Database = {
           id: string;
           nome: string;
           whatsapp: string;
-          origem: "grupo" | "radar" | "mentoria";
-          status: "novo" | "nutrição" | "cliente" | "inativo";
+          origem: string;
+          status: string;
           created_at: string;
           updated_at: string;
         };
@@ -40,7 +42,7 @@ export type Database = {
           lance_inicial: number;
           desconto: number | null;
           score: number | null;
-          status: "pendente" | "publicado" | "encerrado";
+          status: string;
           link: string | null;
           data_leilao: string | null;
           created_at: string;
@@ -82,7 +84,7 @@ export type Database = {
           id: string;
           lead_id: string | null;
           data_inicio: string;
-          status: "ativo" | "cancelado" | "inadimplente";
+          status: string;
           hotmart_subscriber_code: string | null;
           created_at: string;
           updated_at: string;
@@ -115,8 +117,8 @@ export type Database = {
           participou_leilao: boolean;
           orcamento: string | null;
           trava: string | null;
-          status: "pendente" | "contatado" | "aprovado" | "rejeitado";
-          respostas: Record<string, unknown> | null;
+          status: string;
+          respostas: Json | null;
           created_at: string;
           updated_at: string;
         };
@@ -129,7 +131,7 @@ export type Database = {
           orcamento?: string | null;
           trava?: string | null;
           status?: "pendente" | "contatado" | "aprovado" | "rejeitado";
-          respostas?: Record<string, unknown> | null;
+          respostas?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -142,7 +144,7 @@ export type Database = {
           orcamento?: string | null;
           trava?: string | null;
           status?: "pendente" | "contatado" | "aprovado" | "rejeitado";
-          respostas?: Record<string, unknown> | null;
+          respostas?: Json;
           created_at?: string;
           updated_at?: string;
         };
