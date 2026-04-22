@@ -44,6 +44,8 @@ export type Database = {
           score: number | null;
           status: string;
           link: string | null;
+          imagem_url: string | null;
+          grupo_destino: string | null;
           data_leilao: string | null;
           created_at: string;
           updated_at: string;
@@ -59,6 +61,8 @@ export type Database = {
           score?: number | null;
           status?: "pendente" | "publicado" | "encerrado";
           link?: string | null;
+          imagem_url?: string | null;
+          grupo_destino?: "gratuito" | "radar" | "ambos";
           data_leilao?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -74,6 +78,8 @@ export type Database = {
           score?: number | null;
           status?: "pendente" | "publicado" | "encerrado";
           link?: string | null;
+          imagem_url?: string | null;
+          grupo_destino?: "gratuito" | "radar" | "ambos";
           data_leilao?: string | null;
           created_at?: string;
           updated_at?: string;

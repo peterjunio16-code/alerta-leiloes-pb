@@ -10,16 +10,82 @@
     scroll-behavior: smooth;
   }
   ::selection {
-    background: #e63946;
-    color: white;
+    background: #C4962A;
+    color: #060B18;
   }
 }
 
 @layer utilities {
+  /* Legacy — kept for admin pages */
   .text-gradient {
     background: linear-gradient(135deg, #e63946, #ff6b6b);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* Premium gold gradient */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #E8C56A 0%, #C4962A 50%, #A07318 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glassmorphism card */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Gold border glow */
+  .gold-glow {
+    box-shadow: 0 0 40px rgba(196, 150, 42, 0.15), 0 0 80px rgba(196, 150, 42, 0.06);
+  }
+
+  /* Emerald CTA glow */
+  .cta-glow {
+    box-shadow: 0 0 32px rgba(5, 150, 105, 0.35);
+  }
+  .cta-glow:hover {
+    box-shadow: 0 0 48px rgba(5, 150, 105, 0.5);
+  }
+
+  /* Section divider */
+  .section-divider {
+    background: linear-gradient(90deg, transparent, rgba(196, 150, 42, 0.2), transparent);
+    height: 1px;
+  }
+}
+
+/* Float animation for hero card */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 7s ease-in-out 1s infinite;
+}
+
+/* Smooth gradient backgrounds */
+.bg-hero-gradient {
+  background: radial-gradient(ellipse 80% 80% at 50% -10%, rgba(196, 150, 42, 0.07) 0%, transparent 60%),
+              radial-gradient(ellipse at top right, rgba(5, 150, 105, 0.04) 0%, transparent 50%),
+              #060B18;
+}
+
+.bg-section-alt {
+  background: #0A1020;
 }

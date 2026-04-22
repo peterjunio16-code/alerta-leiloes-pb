@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { formatPhone } from "@/lib/utils";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/client";
 import { getMentoriaAdminAlert } from "@/lib/whatsapp/messages";
+import { sendEmail } from "@/lib/email/send";
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,10 +36,49 @@ export async function POST(request: NextRequest) {
       respostas,
     });
 
-    // Notify admin via WhatsApp (non-blocking)
-    const adminNumber = process.env.WHATSAPP_ADMIN_NUMBER;
-    if (adminNumber) {
-      sendWhatsAppMessage(adminNumber, getMentoriaAdminAlert(respostas)).catch(console.error);
+    const alertText = getMentoriaAdminAlert(respostas);
+
+    // Notify all admin WhatsApp numbers (non-blocking)
+    const adminNumbers: string[] = [];
+
+    // Primary admin number from env
+    if (process.env.WHATSAPP_ADMIN_NUMBER) {
+      adminNumbers.push(process.env.WHATSAPP_ADMIN_NUMBER);
+    }
+
+    // Additional numbers configured for mentoria alerts
+    const extraNumbers = process.env.MENTORIA_NOTIFY_NUMBERS;
+    if (extraNumbers) {
+      extraNumbers.split(",").map((n) => n.trim()).filter(Boolean).forEach((n) => {
+        if (!adminNumbers.includes(n)) adminNumbers.push(n);
+      });
+    }
+
+    for (const num of adminNumbers) {
+      sendWhatsAppMessage(num, alertText).catch((err) =>
+        console.error(`[mentoria] WhatsApp to ${num} failed:`, err)
+      );
+    }
+
+    // Email notification (non-blocking)
+    const notifyEmail = process.env.MENTORIA_NOTIFY_EMAIL;
+    if (notifyEmail) {
+      const emailSubject = `Nova candidatura — Mentoria Lance Certo: ${nome}`;
+      const emailText = `
+Nova candidatura recebida para a Mentoria Lance Certo.
+
+Nome: ${nome}
+WhatsApp: ${phone}
+Já participou de leilão: ${participou_leilao === "sim" ? "Sim" : "Não"}
+Orçamento: ${orcamento}
+Principal trava: ${trava}
+
+Ver no painel: ${process.env.NEXT_PUBLIC_APP_URL}/admin/aplicacoes
+      `.trim();
+
+      sendEmail({ to: notifyEmail, subject: emailSubject, text: emailText }).catch((err) =>
+        console.error("[mentoria] Email notification failed:", err)
+      );
     }
 
     return NextResponse.json({ success: true });

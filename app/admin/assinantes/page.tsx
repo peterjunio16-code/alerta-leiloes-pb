@@ -1,5 +1,10 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/Badge";
+import type { Database } from "@/lib/supabase/types";
+
+type Assinante = Database["public"]["Tables"]["assinantes_radar"]["Row"] & {
+  leads: { nome: string; whatsapp: string } | null;
+};
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +13,7 @@ export default async function AssinantesPage() {
   const { data } = await supabase
     .from("assinantes_radar")
     .select("*, leads(nome, whatsapp)")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false }) as { data: Assinante[] | null };
 
   return (
     <div className="space-y-6">
@@ -25,8 +30,8 @@ export default async function AssinantesPage() {
           <tbody className="divide-y divide-[#0f3460]">
             {data?.map((s) => (
               <tr key={s.id} className="hover:bg-[#0f3460]/50">
-                <td className="px-4 py-3 text-white">{(s.leads as { nome: string } | null)?.nome ?? "—"}</td>
-                <td className="px-4 py-3 text-[#a0a0a0]">{(s.leads as { whatsapp: string } | null)?.whatsapp ?? "—"}</td>
+                <td className="px-4 py-3 text-white">{s.leads?.nome ?? "—"}</td>
+                <td className="px-4 py-3 text-[#a0a0a0]">{s.leads?.whatsapp ?? "—"}</td>
                 <td className="px-4 py-3 text-[#a0a0a0]">{new Date(s.data_inicio).toLocaleDateString("pt-BR")}</td>
                 <td className="px-4 py-3"><Badge status={s.status} /></td>
               </tr>

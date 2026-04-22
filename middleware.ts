@@ -1,41 +1,32 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+const ADMIN_COOKIE = "alerta_admin_session";
+
+function isValidSession(value: string): boolean {
+  // Support both old "authenticated" cookie and new base64 session
+  if (value === "authenticated") return true;
+  try {
+    const json = Buffer.from(value, "base64").toString("utf-8");
+    const session = JSON.parse(json);
+    return !!session?.userId && !!session?.role;
+  } catch {
+    return false;
+  }
+}
+
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only protect /admin routes (not /admin/login)
   if (!pathname.startsWith("/admin") || pathname === "/admin/login") {
     return NextResponse.next();
   }
 
-  let response = NextResponse.next();
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = request.cookies.get(ADMIN_COOKIE);
+  if (!session || !isValidSession(session.value)) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

@@ -18,6 +18,19 @@ const config: Config = {
           text: "#e0e0e0",
           muted: "#a0a0a0",
         },
+        gold: {
+          DEFAULT: "#C4962A",
+          light: "#E8C56A",
+          dark: "#A07318",
+          subtle: "rgba(196,150,42,0.12)",
+        },
+        night: {
+          950: "#060B18",
+          900: "#0A1020",
+          800: "#0D1424",
+          700: "#111D32",
+          600: "#1A2740",
+        },
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],

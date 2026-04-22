@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { formatPhone } from "@/lib/utils";
-import { sendWhatsAppMessage } from "@/lib/whatsapp/client";
+import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp/client";
 import { getBoasVindas } from "@/lib/whatsapp/messages";
+import { GRUPO_LINK } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +20,15 @@ export async function POST(request: NextRequest) {
     const phone = formatPhone(whatsapp);
     const supabase = createServiceClient();
 
+    // Check if lead already exists
+    const { data: existing } = await supabase
+      .from("leads")
+      .select("id")
+      .eq("whatsapp", phone)
+      .single();
+
+    const isNew = !existing;
+
     // Upsert lead (avoid duplicates by phone)
     const { data: lead, error } = await supabase
       .from("leads")
@@ -29,16 +39,45 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase upsert error:", error);
+      throw error;
+    }
 
-    // Schedule nurture sequence (days 1, 3, 7, 14)
-    const diasSequencia = [1, 3, 7, 14];
-    await supabase.from("sequencias_nutricao").insert(
-      diasSequencia.map((dia) => ({ lead_id: lead.id, dia }))
-    );
+    // Mark welcome as sent immediately so the webhook never sends a duplicate
+    await supabase.from("leads").update({ boas_vindas_enviado: true }).eq("id", lead.id);
 
-    // Send welcome WhatsApp message (non-blocking)
-    sendWhatsAppMessage(phone, getBoasVindas(nome)).catch(console.error);
+    // Schedule nurture sequence ONLY for new leads (not re-registrations)
+    if (isNew) {
+      const diasSequencia = [1, 3, 7, 14];
+      // Delete any pending duplicates first to avoid sending multiple times
+      await supabase
+        .from("sequencias_nutricao")
+        .delete()
+        .eq("lead_id", lead.id)
+        .eq("enviado", false);
+      supabase.from("sequencias_nutricao").insert(
+        diasSequencia.map((dia) => ({ lead_id: lead.id, dia }))
+      ).then(({ error: seqErr }) => {
+        if (seqErr) console.error("Sequencia insert error:", seqErr);
+      });
+    }
+
+    // Send welcome — await so it completes before the function terminates
+    console.log("[leads] sending welcome to:", phone, "nome:", nome);
+    try {
+      await sendWhatsAppTemplate(phone, "boas_vindas_alerta", "pt_BR", [nome]);
+      console.log("[leads] template sent OK to:", phone);
+    } catch (templateErr) {
+      console.error("[leads] template failed:", templateErr);
+      // Fallback to free-form (requires 24h window)
+      try {
+        await sendWhatsAppMessage(phone, getBoasVindas(nome, GRUPO_LINK));
+        console.log("[leads] free-form fallback sent to:", phone);
+      } catch (freeformErr) {
+        console.error("[leads] free-form also failed:", freeformErr);
+      }
+    }
 
     return NextResponse.json({ success: true, leadId: lead.id });
   } catch (err) {

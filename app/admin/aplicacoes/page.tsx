@@ -1,5 +1,8 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/Badge";
+import type { Database } from "@/lib/supabase/types";
+
+type Aplicacao = Database["public"]["Tables"]["aplicacoes_mentoria"]["Row"];
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +11,7 @@ export default async function AplicacoesPage() {
   const { data } = await supabase
     .from("aplicacoes_mentoria")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false }) as { data: Aplicacao[] | null };
 
   const orcamentoLabel: Record<string, string> = {
     "ate-50k": "Até R$50k",

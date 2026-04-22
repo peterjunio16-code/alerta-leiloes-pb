@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
   return new NextResponse("Forbidden", { status: 403 });
 }
 
-// Incoming messages
+// Incoming messages — handles keyword replies only
+// Welcome message is sent by /api/leads at registration time (not here)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -34,8 +35,8 @@ export async function POST(request: NextRequest) {
 
     if (!text) return NextResponse.json({ status: "non_text" });
 
+    // Handle keyword commands
     const { match, message: responseMessage } = getKeywordResponse(text);
-
     if (match) {
       await sendWhatsAppMessage(from, responseMessage);
     }

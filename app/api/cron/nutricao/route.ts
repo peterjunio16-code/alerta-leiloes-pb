@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/client";
+import type { Database } from "@/lib/supabase/types";
+
+type SeqRow = Database["public"]["Tables"]["sequencias_nutricao"]["Row"] & {
+  leads: { nome: string; whatsapp: string } | null;
+};
 import {
   getSequenciaD1,
   getSequenciaD3,
@@ -36,12 +41,12 @@ export async function GET(request: NextRequest) {
       .eq("dia", dia)
       .eq("enviado", false)
       .lte("created_at", `${cutoffStr}T23:59:59Z`)
-      .limit(50);
+      .limit(50) as { data: SeqRow[] | null };
 
     if (!sequences?.length) continue;
 
     for (const seq of sequences) {
-      const lead = seq.leads as { nome: string; whatsapp: string } | null;
+      const lead = seq.leads;
       if (!lead) continue;
 
       const messageFn = SEQUENCIA_MAP[dia];

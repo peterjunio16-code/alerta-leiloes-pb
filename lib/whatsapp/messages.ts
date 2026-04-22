@@ -1,4 +1,8 @@
-export function getBoasVindas(nome: string): string {
+export function getBoasVindas(nome: string, groupLink?: string): string {
+  const groupSection = groupLink
+    ? `\n👥 *Seu grupo gratuito:*\n${groupLink}\n`
+    : "";
+
   return `Olá, ${nome}! 👋
 
 Bem-vindo(a) ao *Alerta Leilões PB* 🏠
@@ -9,14 +13,33 @@ Você acaba de entrar no maior grupo de inteligência imobiliária para leilões
 → Alertas semanais de novos leilões
 → Análises educativas de oportunidades reais
 → Dicas práticas para investir com segurança
-
-💡 *Comandos úteis neste WhatsApp:*
+${groupSection}
+💡 *Comandos úteis:*
 Digite *RADAR* para conhecer nossa assinatura premium
 Digite *MENTORIA* para saber sobre a mentoria individual
 Digite *COMO FUNCIONA* para entender os 3 níveis
 Digite *PREÇO* para ver nossa tabela de planos
 
 Qualquer dúvida, é só perguntar! 🚀`;
+}
+
+export function getBoasVindasRadar(nome: string, radarGroupLink: string): string {
+  return `Olá, ${nome}! 🎯
+
+Seu acesso ao *Radar PB* foi confirmado! Parabéns por dar esse passo.
+
+⭐ *Você agora tem acesso a:*
+→ Alertas 48h antes dos leilões
+→ Score de oportunidade (0–10) por imóvel
+→ Análise jurídica resumida
+→ Estimativa de lucro de cada imóvel
+
+👥 *Entre no seu grupo exclusivo agora:*
+${radarGroupLink}
+
+💡 *Dica:* Ative as notificações do grupo para não perder nenhum alerta.
+
+Bem-vindo(a) ao clube dos investidores que arrrematam com inteligência! 🏆`;
 }
 
 export function getSequenciaD1(nome: string): string {
@@ -76,7 +99,7 @@ O *Radar PB* foi criado para quem quer *agir com inteligência*:
 ✅ Análise jurídica resumida
 ✅ Estimativa de lucro
 
-Por apenas *R$197/mês*. Cancele quando quiser.
+Por apenas *R$37,90/mês*. Cancele quando quiser.
 
 👉 Acesse agora: ${process.env.NEXT_PUBLIC_APP_URL}/radar
 

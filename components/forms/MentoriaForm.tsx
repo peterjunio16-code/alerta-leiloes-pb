@@ -35,9 +35,11 @@ export function MentoriaForm() {
   if (submitted) {
     return (
       <div className="text-center space-y-4 py-8">
-        <div className="text-6xl">🏆</div>
-        <h3 className="text-2xl font-bold">Candidatura recebida!</h3>
-        <p className="text-[#a0a0a0]">
+        <div className="w-20 h-20 bg-gold/10 border border-gold/20 rounded-full flex items-center justify-center mx-auto">
+          <span className="text-4xl">🏆</span>
+        </div>
+        <h3 className="text-2xl font-black text-white">Candidatura recebida!</h3>
+        <p className="text-slate-400 leading-relaxed">
           Analisaremos seu perfil e entraremos em contato em até 48 horas via WhatsApp.
         </p>
       </div>
@@ -45,12 +47,12 @@ export function MentoriaForm() {
   }
 
   const inputClass =
-    "w-full bg-[#0f3460] border border-[#16213e] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#e63946] transition-colors placeholder-[#a0a0a0]";
-  const labelClass = "block text-sm font-medium text-[#e0e0e0] mb-2";
-  const errorClass = "text-[#e63946] text-xs mt-1";
+    "w-full bg-night-950/80 border border-white/[0.08] text-white rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/30 transition placeholder-slate-600";
+  const labelClass = "block text-sm font-medium text-slate-300 mb-2";
+  const errorClass = "text-red-400 text-xs mt-1";
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div>
         <label className={labelClass}>Nome completo *</label>
         <input {...register("nome")} placeholder="Seu nome completo" className={inputClass} />
@@ -96,11 +98,11 @@ export function MentoriaForm() {
         {errors.trava && <p className={errorClass}>{errors.trava.message}</p>}
       </div>
 
-      <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
+      <Button type="submit" size="lg" loading={isSubmitting} className="w-full !bg-gold hover:!bg-gold-dark text-night-950 font-black">
         🏆 Enviar Candidatura
       </Button>
 
-      <p className="text-xs text-center text-[#a0a0a0]">
+      <p className="text-xs text-center text-slate-600">
         Vagas limitadas. Responderemos em até 48 horas.
       </p>
     </form>
