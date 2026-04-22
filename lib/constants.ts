@@ -1,5 +1,5 @@
 /** Public checkout links — update here to change everywhere */
-export const RADAR_CHECKOUT_URL = "https://pay.kiwify.com.br/V8TxxkE";
+export const RADAR_CHECKOUT_URL = "https://pay.kiwify.com.br/T1OOdCS";
 export const GRUPO_LINK = "https://chat.whatsapp.com/LR1TpGAqluX2lkNgsmKwfE?mode=gi_t";
 
 /** Contact */
