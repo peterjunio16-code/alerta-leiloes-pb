@@ -17,11 +17,20 @@ export interface LeilaoNinjaItem {
 }
 
 function getLocalChromePath(): string | null {
+  const localAppData =
+    process.env.LOCALAPPDATA ||
+    (process.env.HOME
+      ? undefined
+      : `C:\\Users\\${process.env.USERNAME}\\AppData\\Local`);
+
   const candidates = [
     process.env.PLAYWRIGHT_CHROMIUM_PATH,
     "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-    `${process.env.LOCALAPPDATA}\\ms-playwright\\chromium-1217\\chrome-win64\\chrome.exe`,
+    localAppData ? `${localAppData}\\ms-playwright\\chromium-1217\\chrome-win64\\chrome.exe` : undefined,
+    // fallback: newer playwright versions
+    localAppData ? `${localAppData}\\ms-playwright\\chromium-1224\\chrome-win64\\chrome.exe` : undefined,
+    localAppData ? `${localAppData}\\ms-playwright\\chromium-1230\\chrome-win64\\chrome.exe` : undefined,
   ].filter(Boolean) as string[];
   return candidates.find((p) => fs.existsSync(p)) ?? null;
 }
