@@ -122,7 +122,7 @@ export default function RadarPage() {
           <div className="relative max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10"
             style={{ boxShadow: "0 0 60px rgba(196,150,42,0.12), 0 30px 60px rgba(0,0,0,0.6)" }}>
             <video
-              src="/roteiro.mp4"
+              src={process.env.NEXT_PUBLIC_VSL_URL || "/roteiro.mp4"}
               controls
               playsInline
               preload="metadata"
