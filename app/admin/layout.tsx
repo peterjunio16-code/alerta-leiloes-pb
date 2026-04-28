@@ -10,7 +10,7 @@ type NavItem = { href: string; label: string; icon: string; roles: AdminRole[] }
 const navItems: NavItem[] = [
   { href: "/admin",             label: "Dashboard",        icon: "📊", roles: ["super_admin","editor","viewer"] },
   { href: "/admin/leads",       label: "Leads",            icon: "👥", roles: ["super_admin","editor","viewer"] },
-  { href: "/admin/imoveis",     label: "Imóveis",          icon: "🏠", roles: ["super_admin","editor"] },
+  { href: "/admin/imoveis",     label: "Imóveis",          icon: "🏠", roles: ["super_admin","editor","imoveis_only"] },
   { href: "/admin/assinantes",  label: "Assinantes Radar", icon: "🎯", roles: ["super_admin"] },
   { href: "/admin/aplicacoes",  label: "Candidaturas",     icon: "📋", roles: ["super_admin","editor","viewer"] },
   { href: "/admin/blog",        label: "Blog",             icon: "✍️", roles: ["super_admin","editor"] },

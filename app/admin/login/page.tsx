@@ -28,7 +28,9 @@ export default function AdminLoginPage() {
       return;
     }
 
-    router.push("/admin");
+    const data = await res.json();
+    const dest = data.role === "imoveis_only" ? "/admin/imoveis" : "/admin";
+    router.push(dest);
     router.refresh();
   };
 

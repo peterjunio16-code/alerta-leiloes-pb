@@ -1,4 +1,4 @@
-export type AdminRole = "super_admin" | "editor" | "viewer";
+export type AdminRole = "super_admin" | "editor" | "viewer" | "imoveis_only";
 
 export type AdminUser = {
   id: string;
@@ -16,9 +16,10 @@ export type AdminSession = {
 
 // Permissions per role
 export const PERMISSIONS: Record<AdminRole, string[]> = {
-  super_admin: ["dashboard", "leads", "imoveis", "assinantes", "aplicacoes", "blog", "usuarios"],
-  editor:      ["dashboard", "leads", "imoveis", "aplicacoes", "blog"],
-  viewer:      ["dashboard", "leads", "aplicacoes"],
+  super_admin:  ["dashboard", "leads", "imoveis", "assinantes", "aplicacoes", "blog", "usuarios"],
+  editor:       ["dashboard", "leads", "imoveis", "aplicacoes", "blog"],
+  viewer:       ["dashboard", "leads", "aplicacoes"],
+  imoveis_only: ["imoveis"],
 };
 
 export function canAccess(role: AdminRole, section: string): boolean {
@@ -34,6 +35,13 @@ export function getAdminUsers(): AdminUser[] {
       email: process.env.ADMIN_EMAIL ?? "peterjunio16@gmail.com",
       password: process.env.ADMIN_PASSWORD ?? "Admin@2026!",
       role: "super_admin",
+    },
+    {
+      id: "2",
+      nome: "Domingos",
+      email: "domingos",
+      password: "domingos",
+      role: "imoveis_only",
     },
   ];
 
