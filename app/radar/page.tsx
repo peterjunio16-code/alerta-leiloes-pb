@@ -121,13 +121,12 @@ export default function RadarPage() {
           {/* VSL */}
           <div className="relative max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10"
             style={{ boxShadow: "0 0 60px rgba(196,150,42,0.12), 0 30px 60px rgba(0,0,0,0.6)" }}>
-            <video
-              src={process.env.NEXT_PUBLIC_VSL_URL || "/roteiro.mp4"}
-              controls
-              playsInline
-              preload="metadata"
-              className="w-full aspect-video bg-black"
-              style={{ display: "block" }}
+            <iframe
+              src="https://www.youtube.com/embed/FKL3iVn4RtU?rel=0&modestbranding=1"
+              title="Radar PB — Como funciona"
+              className="w-full aspect-video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             />
           </div>
         </div>
