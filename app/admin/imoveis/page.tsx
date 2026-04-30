@@ -111,28 +111,41 @@ export default function ImoveisPage() {
   const handleSync = async () => {
     setSyncing(true);
     setSyncResult(null);
+
+    // Tenta servidor local primeiro (scraping mais rápido sem timeout de serverless)
+    let usedLocal = false;
     try {
-      // Tenta servidor local primeiro (mais confiável — roda no computador do admin)
-      const res = await fetch("http://localhost:3001/sync", {
+      const localRes = await fetch("http://localhost:3001/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ maxPages: 10 }),
-        signal: AbortSignal.timeout(300000),
+        signal: AbortSignal.timeout(10000), // 10s para detectar se local está up
       });
-      const data = await res.json();
-      setSyncResult(data);
-      await carregarImoveis();
+      if (localRes.ok) {
+        const data = await localRes.json();
+        setSyncResult(data);
+        await carregarImoveis();
+        usedLocal = true;
+      }
     } catch {
-      // Tenta iniciar via endpoint de fallback (caso servidor tenha caído)
-      setSyncResult({
-        errors: [
-          "Servidor local offline. Clique duas vezes no arquivo 'iniciar-servidor.vbs' na pasta alerta-leiloes e aguarde 10 segundos.",
-          "Ou reinicie o computador — o servidor sobe automaticamente no startup.",
-        ],
-      });
-    } finally {
-      setSyncing(false);
+      // local offline — usa API da Vercel
     }
+
+    if (!usedLocal) {
+      try {
+        const res = await fetch("/api/admin/scrape", {
+          method: "POST",
+          signal: AbortSignal.timeout(300000),
+        });
+        const data = await res.json();
+        setSyncResult(data);
+        await carregarImoveis();
+      } catch (err) {
+        setSyncResult({ errors: ["Erro ao sincronizar: " + (err instanceof Error ? err.message : "tente novamente")] });
+      }
+    }
+
+    setSyncing(false);
   };
 
   const imovelPendentes = imoveis.filter((i) => i.status === "pendente").length;
