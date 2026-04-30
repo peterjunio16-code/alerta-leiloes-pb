@@ -39,7 +39,7 @@ export function getAdminUsers(): AdminUser[] {
     {
       id: "2",
       nome: "Domingos",
-      email: "domingos",
+      email: "domingos@gmail.com",
       password: "domingos",
       role: "imoveis_only",
     },
