@@ -4,7 +4,14 @@ import { cookies } from "next/headers";
 
 function isAdmin() {
   const cookie = cookies().get("alerta_admin_session");
-  return cookie?.value === "authenticated";
+  if (!cookie?.value) return false;
+  try {
+    const json = Buffer.from(cookie.value, "base64").toString("utf-8");
+    const session = JSON.parse(json);
+    return !!session?.userId;
+  } catch {
+    return false;
+  }
 }
 
 export async function GET() {
