@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatCurrency } from "@/lib/utils";
@@ -16,6 +15,12 @@ const GRUPO_LABELS: Record<GrupoDestino, string> = {
   ambos: "📢⭐ Ambos os Grupos",
 };
 
+type DiagResult = {
+  leads: { total: number; ativos: number };
+  radar: { assinantes_ativos: number };
+  whatsapp: { phone_number_id_configurado: boolean; token_configurado: boolean; token_valido: boolean; detalhe: string };
+} | null;
+
 export default function ImoveisPage() {
   const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [publishing, setPublishing] = useState<string | null>(null);
@@ -26,24 +31,37 @@ export default function ImoveisPage() {
   const [grupoSelecionado, setGrupoSelecionado] = useState<Record<string, GrupoDestino>>({});
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [ordenacao, setOrdenacao] = useState<"recentes" | "score">("recentes");
-  const supabase = createClient();
+  const [diag, setDiag] = useState<DiagResult>(null);
+  const [diagLoading, setDiagLoading] = useState(false);
+
+  const carregarDiag = async () => {
+    setDiagLoading(true);
+    try {
+      const res = await fetch("/api/admin/diagnostico");
+      if (res.ok) setDiag(await res.json());
+    } finally {
+      setDiagLoading(false);
+    }
+  };
 
   const carregarImoveis = async () => {
-    let query = supabase.from("imoveis").select("*");
-    if (filtroStatus !== "todos") query = query.eq("status", filtroStatus);
-    if (ordenacao === "score") {
-      query = query.order("score", { ascending: false }).order("created_at", { ascending: false });
-    } else {
-      query = query.order("created_at", { ascending: false });
+    const params = new URLSearchParams({ status: filtroStatus, order: ordenacao });
+    const res = await fetch(`/api/admin/imoveis?${params}`);
+    if (res.ok) {
+      const data = await res.json();
+      setImoveis(data ?? []);
     }
-    const { data } = await query;
-    setImoveis(data ?? []);
   };
 
   useEffect(() => {
     carregarImoveis();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtroStatus, ordenacao]);
+
+  useEffect(() => {
+    carregarDiag();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getGrupo = (id: string): GrupoDestino =>
     grupoSelecionado[id] ?? (imoveis.find((i) => i.id === id)?.grupo_destino as GrupoDestino) ?? "gratuito";
@@ -65,10 +83,29 @@ export default function ImoveisPage() {
         body: JSON.stringify({ imovelId: id, grupo }),
       });
       const data = await res.json();
+
+      if (!res.ok) {
+        alert(`❌ Erro ao publicar!\n\n${data.detalhe ?? data.error ?? "Erro desconhecido"}`);
+        return;
+      }
+
       setImoveis((prev) =>
         prev.map((i) => (i.id === id ? { ...i, status: "publicado", grupo_destino: grupo } : i))
       );
-      alert(`✅ Publicado! ${data.notificados ?? 0} contatos notificados.`);
+
+      const leadsInfo = data.leads_encontrados !== undefined
+        ? `\n📋 Leads na base: ${data.leads_encontrados}`
+        : "";
+
+      if (data.leads_encontrados === 0) {
+        alert(`⚠️ Imóvel marcado como publicado, mas NENHUM lead foi encontrado na base.\n\nCadastre leads em /admin/leads ou aguarde assinaturas.`);
+      } else if (data.erros?.length > 0) {
+        alert(`⚠️ Publicado com erros!\n\n✅ ${data.notificados} notificados${leadsInfo}\n❌ ${data.erros.length} falhas:\n${data.erros.slice(0, 3).join("\n")}`);
+      } else {
+        alert(`✅ Publicado com sucesso!\n\n📨 ${data.notificados} contatos notificados${leadsInfo}`);
+      }
+    } catch (err) {
+      alert(`❌ Erro de conexão: ${err instanceof Error ? err.message : "tente novamente"}`);
     } finally {
       setPublishing(null);
     }
@@ -89,6 +126,7 @@ export default function ImoveisPage() {
     setPublishingAll(true);
     setPublishAllResult(null);
     let ok = 0; let erro = 0;
+    let totalNotificados = 0;
     for (const imovel of pendentes) {
       try {
         const res = await fetch("/api/imoveis/publicar", {
@@ -96,16 +134,21 @@ export default function ImoveisPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ imovelId: imovel.id, grupo }),
         });
+        const data = await res.json();
         if (res.ok) {
           ok++;
+          totalNotificados += data.notificados ?? 0;
           setImoveis((prev) => prev.map((i) => i.id === imovel.id ? { ...i, status: "publicado", grupo_destino: grupo } : i));
           // Pequena pausa entre disparos para não sobrecarregar a API
           await new Promise((r) => setTimeout(r, 1500));
-        } else erro++;
+        } else {
+          erro++;
+          console.error(`Erro ao publicar ${imovel.titulo}:`, data.detalhe ?? data.error);
+        }
       } catch { erro++; }
     }
     setPublishingAll(false);
-    setPublishAllResult(`✅ ${ok} imóveis publicados para ${label}${erro ? ` • ❌ ${erro} erros` : ""}`);
+    setPublishAllResult(`✅ ${ok} imóveis publicados para ${label} • 📨 ${totalNotificados} contatos notificados${erro ? ` • ❌ ${erro} erros` : ""}`);
   };
 
   const handleSync = async () => {
@@ -115,7 +158,7 @@ export default function ImoveisPage() {
     // Tenta servidor local primeiro (scraping mais rápido sem timeout de serverless)
     let usedLocal = false;
     try {
-      const localRes = await fetch("http://localhost:3001/sync", {
+      const localRes = await fetch("http://localhost:3100/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ maxPages: 10 }),
@@ -152,6 +195,54 @@ export default function ImoveisPage() {
 
   return (
     <div className="space-y-6">
+
+      {/* Painel de Diagnóstico WhatsApp */}
+      <div className="bg-[#0f1923] border border-[#1e3a5f] rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-white text-sm font-semibold">🔍 Diagnóstico do Sistema</h2>
+          <button
+            onClick={carregarDiag}
+            disabled={diagLoading}
+            className="text-xs text-[#a0a0a0] hover:text-white underline disabled:opacity-50"
+          >
+            {diagLoading ? "Verificando..." : "Atualizar"}
+          </button>
+        </div>
+        {diag ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="bg-[#16213e] rounded-lg p-3">
+              <p className="text-[#a0a0a0] mb-1">Leads (gratuito)</p>
+              <p className={`font-bold text-lg ${diag.leads.ativos > 0 ? "text-green-400" : "text-yellow-400"}`}>
+                {diag.leads.ativos}
+              </p>
+              <p className="text-[#a0a0a0]">ativos de {diag.leads.total}</p>
+            </div>
+            <div className="bg-[#16213e] rounded-lg p-3">
+              <p className="text-[#a0a0a0] mb-1">Radar PB (pago)</p>
+              <p className={`font-bold text-lg ${diag.radar.assinantes_ativos > 0 ? "text-yellow-400" : "text-[#a0a0a0]"}`}>
+                {diag.radar.assinantes_ativos}
+              </p>
+              <p className="text-[#a0a0a0]">assinantes ativos</p>
+            </div>
+            <div className="bg-[#16213e] rounded-lg p-3 col-span-2">
+              <p className="text-[#a0a0a0] mb-1">WhatsApp API</p>
+              <p className={`font-bold ${diag.whatsapp.token_valido ? "text-green-400" : "text-red-400"}`}>
+                {diag.whatsapp.token_valido ? "✅ Token válido" : "❌ Token inválido ou expirado"}
+              </p>
+              <p className="text-[#a0a0a0] mt-1 leading-relaxed">{diag.whatsapp.detalhe}</p>
+              {!diag.whatsapp.token_configurado && (
+                <p className="text-red-400 mt-1">⚠️ WHATSAPP_ACCESS_TOKEN não definido no .env</p>
+              )}
+              {!diag.whatsapp.phone_number_id_configurado && (
+                <p className="text-red-400 mt-1">⚠️ WHATSAPP_PHONE_NUMBER_ID não definido no .env</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="text-[#a0a0a0] text-xs">{diagLoading ? "Carregando diagnóstico..." : "Clique em Atualizar"}</p>
+        )}
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

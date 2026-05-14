@@ -2,13 +2,15 @@ import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
 import { ConfiancaBar } from "@/components/landing/ConfiancaBar";
 import { PainSection } from "@/components/landing/PainSection";
-import { Vitrine } from "@/components/landing/Vitrine";
-import { ProdutoEmUso } from "@/components/landing/ProdutoEmUso";
-import { ComoFunciona } from "@/components/landing/ComoFunciona";
-import { Beneficios } from "@/components/landing/Beneficios";
+import { SemVsCom } from "@/components/landing/SemVsCom";
+import { MockupWhatsApp } from "@/components/landing/MockupWhatsApp";
+import { ScoreVisual } from "@/components/landing/ScoreVisual";
+import { SimuladorOportunidade } from "@/components/landing/SimuladorOportunidade";
+import { ComparacaoInvestimento } from "@/components/landing/ComparacaoInvestimento";
 import { Planos } from "@/components/landing/Planos";
 import { ProvasSocial } from "@/components/landing/ProvasSocial";
 import { FAQ } from "@/components/landing/FAQ";
+import { SegurancaJuridica } from "@/components/landing/SegurancaJuridica";
 import { CTAFinal } from "@/components/landing/CTAFinal";
 import { Footer } from "@/components/landing/Footer";
 import { WhatsAppFloating } from "@/components/ui/WhatsAppFloating";
@@ -21,13 +23,15 @@ export default function HomePage() {
         <Hero />
         <ConfiancaBar />
         <PainSection />
-        <Vitrine />
-        <ProdutoEmUso />
-        <ComoFunciona />
-        <Beneficios />
+        <SemVsCom />
+        <MockupWhatsApp />
+        <ScoreVisual />
+        <SimuladorOportunidade />
+        <ComparacaoInvestimento />
         <Planos />
         <ProvasSocial />
         <FAQ />
+        <SegurancaJuridica />
         <CTAFinal />
         <Footer />
       </main>

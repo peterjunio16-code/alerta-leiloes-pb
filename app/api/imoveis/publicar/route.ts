@@ -11,6 +11,8 @@ function msgGratuito(imovel: Record<string, unknown>): string {
     ? new Date(imovel.data_leilao as string).toLocaleDateString("pt-BR")
     : "em breve";
 
+  const linkImovel = imovel.link as string | null;
+
   return `🏠 *Alerta Leilões PB*
 
 📍 *${imovel.titulo}*
@@ -18,10 +20,10 @@ function msgGratuito(imovel: Record<string, unknown>): string {
 💰 Lance a partir de *${lance}*
 📉 Desconto: *${desconto}* abaixo da avaliação
 📅 Leilão: ${data}
-
+${linkImovel ? `\n🔗 Ver imóvel: ${linkImovel}` : ""}
 ━━━━━━━━━━━━━
 Quer análise completa com score, riscos e estratégia de lance?
-👉 *Radar PB:* ${process.env.NEXT_PUBLIC_APP_URL}/radar`;
+👉 *Assine o Radar PB:* ${process.env.NEXT_PUBLIC_APP_URL}/radar`;
 }
 
 function msgRadar(imovel: Record<string, unknown>): string {
@@ -34,6 +36,8 @@ function msgRadar(imovel: Record<string, unknown>): string {
     ? new Date(imovel.data_leilao as string).toLocaleDateString("pt-BR")
     : "Em breve";
 
+  const linkImovelRadar = imovel.link as string | null;
+
   return `🎯 *RADAR PB — Oportunidade Analisada*
 
 🏘️ *${imovel.titulo}*
@@ -43,32 +47,40 @@ function msgRadar(imovel: Record<string, unknown>): string {
 🏷️ Lance inicial: *${lance}*
 ${desconto ? `📉 Desconto: *${desconto}* abaixo da avaliação\n` : ""}⭐ Score Radar: *${imovel.score ?? 0}/10*
 📅 Data do leilão: ${data}
-
+${linkImovelRadar ? `\n🔗 Ver imóvel completo: ${linkImovelRadar}` : ""}
 _Você recebe isso por ser assinante do Radar PB._`;
 }
+
+type EnvioResult = {
+  notificados: number;
+  leads_encontrados: number;
+  erros: string[];
+};
 
 async function enviarParaGrupo(
   supabase: ReturnType<typeof createServiceClient>,
   imovel: Record<string, unknown>,
   grupo: Grupo
-): Promise<number> {
+): Promise<EnvioResult> {
   const numeros = new Set<string>();
 
   // Grupo gratuito → todos os leads não-inativos
   if (grupo === "gratuito" || grupo === "ambos") {
-    const { data: leads } = await supabase
+    const { data: leads, error: leadsError } = await supabase
       .from("leads")
       .select("whatsapp")
       .neq("status", "inativo");
-    leads?.forEach((l) => numeros.add(l.whatsapp));
+    if (leadsError) console.error("Erro ao buscar leads:", leadsError.message);
+    leads?.forEach((l) => { if (l.whatsapp) numeros.add(l.whatsapp); });
   }
 
   // Grupo radar → assinantes ativos (via join com leads para pegar whatsapp)
   if (grupo === "radar" || grupo === "ambos") {
-    const { data: assinantes } = await supabase
+    const { data: assinantes, error: asinError } = await supabase
       .from("assinantes_radar")
       .select("lead_id, leads(whatsapp)")
       .eq("status", "ativo");
+    if (asinError) console.error("Erro ao buscar assinantes:", asinError.message);
     assinantes?.forEach((a) => {
       const lead = a.leads as { whatsapp: string } | null;
       if (lead?.whatsapp) numeros.add(lead.whatsapp);
@@ -76,11 +88,12 @@ async function enviarParaGrupo(
   }
 
   const lista = Array.from(numeros);
+  const leads_encontrados = lista.length;
   const mensagemGratuito = msgGratuito(imovel);
   const mensagemRadar = msgRadar(imovel);
 
   // Para "ambos", assinantes radar recebem mensagem premium
-  let assinantesRadarNums = new Set<string>();
+  const assinantesRadarNums = new Set<string>();
   if (grupo === "ambos") {
     const { data: assinantes } = await supabase
       .from("assinantes_radar")
@@ -93,6 +106,8 @@ async function enviarParaGrupo(
   }
 
   let notificados = 0;
+  const erros: string[] = [];
+
   for (const numero of lista) {
     let msg: string;
     if (grupo === "radar") {
@@ -103,17 +118,24 @@ async function enviarParaGrupo(
       msg = mensagemGratuito;
     }
 
-    const imagemUrl = imovel.imagem_url as string | null;
-    if (imagemUrl) {
-      await sendWhatsAppImageMessage(numero, imagemUrl, msg);
-    } else {
-      await sendWhatsAppMessage(numero, msg);
+    try {
+      const imagemUrl = imovel.imagem_url as string | null;
+      if (imagemUrl) {
+        await sendWhatsAppImageMessage(numero, imagemUrl, msg);
+      } else {
+        await sendWhatsAppMessage(numero, msg);
+      }
+      notificados++;
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error(`Falha ao enviar para ${numero}:`, errMsg);
+      erros.push(`${numero}: ${errMsg.slice(0, 120)}`);
     }
-    notificados++;
+
     await new Promise((r) => setTimeout(r, 500));
   }
 
-  return notificados;
+  return { notificados, leads_encontrados, erros };
 }
 
 export async function POST(request: NextRequest) {
@@ -139,11 +161,18 @@ export async function POST(request: NextRequest) {
       .update({ status: "publicado", grupo_destino: grupo })
       .eq("id", imovelId);
 
-    const notificados = await enviarParaGrupo(supabase, imovel as Record<string, unknown>, grupo);
+    const resultado = await enviarParaGrupo(supabase, imovel as Record<string, unknown>, grupo);
 
-    return NextResponse.json({ success: true, notificados, grupo });
+    return NextResponse.json({
+      success: true,
+      notificados: resultado.notificados,
+      leads_encontrados: resultado.leads_encontrados,
+      erros: resultado.erros,
+      grupo,
+    });
   } catch (err) {
-    console.error("Error publishing imóvel:", err);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("Error publishing imóvel:", errMsg);
+    return NextResponse.json({ error: "Erro interno", detalhe: errMsg }, { status: 500 });
   }
 }

@@ -54,17 +54,17 @@ export function Hero() {
             </div>
 
             {/* Headline */}
-            <h1 className="text-[2.6rem] sm:text-5xl lg:text-[3.4rem] xl:text-[3.8rem] font-black leading-[1.05] tracking-tight text-white">
-              Imóveis de leilão com{" "}
-              <span className="text-gradient-gold">alto potencial</span>{" "}
+            <h1 className="text-[2.4rem] sm:text-5xl lg:text-[3.2rem] xl:text-[3.6rem] font-black leading-[1.05] tracking-tight text-white">
+              Receba os melhores imóveis de{" "}
+              <span className="text-gradient-gold">leilão na Paraíba</span>{" "}
               <br className="hidden lg:block" />
-              <span className="text-slate-200">filtrados para você</span>
+              antes da maioria perceber a oportunidade
             </h1>
 
             {/* Subheadline */}
             <p className="text-lg text-slate-400 leading-relaxed max-w-lg mx-auto lg:mx-0">
-              Casas, apartamentos e terrenos na Paraíba com análise clara de oportunidade, risco e atratividade.{" "}
-              <span className="text-white font-medium">Menos tempo perdido. Mais critério para agir.</span>
+              O Alerta Leilões PB filtra imóveis, calcula risco, analisa edital e entrega oportunidades{" "}
+              <span className="text-white font-medium">direto no seu WhatsApp.</span>
             </p>
 
             {/* CTAs */}
