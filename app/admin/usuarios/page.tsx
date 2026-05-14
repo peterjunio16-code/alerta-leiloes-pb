@@ -5,9 +5,10 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 const ROLE_LABELS: Record<AdminRole, { label: string; color: string }> = {
-  super_admin: { label: "Super Admin", color: "text-gold bg-gold/10 border-gold/20" },
-  editor:      { label: "Editor", color: "text-blue-400 bg-blue-400/10 border-blue-400/20" },
-  viewer:      { label: "Visualizador", color: "text-slate-300 bg-slate-300/10 border-slate-300/20" },
+  super_admin:  { label: "Super Admin", color: "text-gold bg-gold/10 border-gold/20" },
+  editor:       { label: "Editor", color: "text-blue-400 bg-blue-400/10 border-blue-400/20" },
+  viewer:       { label: "Visualizador", color: "text-slate-300 bg-slate-300/10 border-slate-300/20" },
+  imoveis_only: { label: "Imóveis", color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20" },
 };
 
 export default function UsuariosPage() {

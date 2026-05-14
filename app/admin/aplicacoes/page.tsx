@@ -8,10 +8,22 @@ export const dynamic = "force-dynamic";
 
 export default async function AplicacoesPage() {
   const supabase = createServiceClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("aplicacoes_mentoria")
     .select("*")
-    .order("created_at", { ascending: false }) as { data: Aplicacao[] | null };
+    .order("created_at", { ascending: false }) as { data: Aplicacao[] | null; error: { message: string } | null };
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-white">Candidaturas Mentoria</h1>
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-red-300 text-sm">
+          <p className="font-semibold mb-1">Erro ao carregar candidaturas:</p>
+          <p>{error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   const orcamentoLabel: Record<string, string> = {
     "ate-50k": "Até R$50k",
