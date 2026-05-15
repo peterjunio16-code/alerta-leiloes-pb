@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   if (!getAdminSession()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { titulo, conteudo, resumo, tags, imagem_url, publicado = false } = body;
+  const { titulo, conteudo, resumo, imagem_url, publicado = false } = body;
 
   if (!titulo || !conteudo) {
     return NextResponse.json({ error: "titulo e conteudo são obrigatórios" }, { status: 400 });
@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
       slug,
       conteudo,
       resumo: resumo ?? conteudo.slice(0, 200),
-      tags: tags ?? [],
       imagem_url: imagem_url ?? null,
       publicado,
     })

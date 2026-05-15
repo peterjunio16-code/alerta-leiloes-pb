@@ -37,7 +37,7 @@ export default function BlogAdminPage() {
   const [loading, setLoading] = useState(true);
   const [criando, setCriando] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ titulo: "", conteudo: "", resumo: "", tags: "" });
+  const [form, setForm] = useState({ titulo: "", conteudo: "", resumo: "" });
 
   const carregar = async () => {
     setLoading(true);
@@ -79,7 +79,6 @@ export default function BlogAdminPage() {
         titulo: form.titulo,
         conteudo: form.conteudo,
         resumo: form.resumo,
-        tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : [],
         publicado: true,
       }),
     });
@@ -99,7 +98,6 @@ export default function BlogAdminPage() {
     setForm({
       titulo: s.titulo,
       resumo: s.resumo,
-      tags: s.tags.join(", "),
       conteudo: `# ${s.titulo}\n\n${s.resumo}\n\n## Introdução\n\nEscreva o conteúdo completo do artigo aqui...\n\n## Conclusão\n\nConclua o artigo com um resumo e chamada para ação.`,
     });
     setShowForm(true);
@@ -150,17 +148,6 @@ export default function BlogAdminPage() {
               value={form.resumo}
               onChange={(e) => setForm((f) => ({ ...f, resumo: e.target.value }))}
               placeholder="Descrição curta do artigo..."
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs text-[#a0a0a0] font-medium">Tags (separadas por vírgula)</label>
-            <input
-              type="text"
-              className="w-full bg-[#0f1923] border border-[#0f3460] text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-[#e63946]"
-              value={form.tags}
-              onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
-              placeholder="leilão, paraíba, imóveis, dicas"
             />
           </div>
 
