@@ -36,6 +36,7 @@ export default function BlogAdminPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [criando, setCriando] = useState(false);
+  const [gerando, setGerando] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ titulo: "", conteudo: "", resumo: "" });
 
@@ -85,10 +86,24 @@ export default function BlogAdminPage() {
     const data = await res.json();
     setCriando(false);
     if (res.ok) {
-      setForm({ titulo: "", conteudo: "", resumo: "", tags: "" });
+      setForm({ titulo: "", conteudo: "", resumo: "" });
       setShowForm(false);
       await carregar();
       alert("✅ Artigo criado e publicado!");
+    } else {
+      alert(`❌ Erro: ${data.error}`);
+    }
+  };
+
+  const gerarArtigo = async () => {
+    if (!confirm("Gerar e publicar um novo artigo da biblioteca semanal?")) return;
+    setGerando(true);
+    const res = await fetch("/api/admin/blog/gerar", { method: "POST" });
+    const data = await res.json();
+    setGerando(false);
+    if (res.ok) {
+      await carregar();
+      alert(`✅ Artigo gerado: "${data.titulo}"`);
     } else {
       alert(`❌ Erro: ${data.error}`);
     }
@@ -111,10 +126,17 @@ export default function BlogAdminPage() {
           <h1 className="text-2xl font-bold text-white">Blog ({posts.length} artigos)</h1>
           <p className="text-[#a0a0a0] text-sm mt-1">Crie e gerencie artigos sobre leilões na Paraíba</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-end">
           <a href="/blog" target="_blank" className="text-xs text-[#a0a0a0] hover:text-white px-3 py-1.5 bg-[#0f3460] rounded-lg">
             🌐 Ver blog público
           </a>
+          <button
+            onClick={gerarArtigo}
+            disabled={gerando}
+            className="text-xs font-semibold px-4 py-1.5 bg-[#0f3460] hover:bg-[#1a4a8a] text-white rounded-lg transition-colors disabled:opacity-50"
+          >
+            {gerando ? "Gerando..." : "🔄 Gerar artigo semanal"}
+          </button>
           <button
             onClick={() => setShowForm(!showForm)}
             className="text-xs font-semibold px-4 py-1.5 bg-[#e63946] hover:bg-red-700 text-white rounded-lg transition-colors"

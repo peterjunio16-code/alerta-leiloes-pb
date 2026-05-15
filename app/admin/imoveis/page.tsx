@@ -200,13 +200,21 @@ export default function ImoveisPage() {
       <div className="bg-[#0f1923] border border-[#1e3a5f] rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-white text-sm font-semibold">🔍 Diagnóstico do Sistema</h2>
-          <button
-            onClick={carregarDiag}
-            disabled={diagLoading}
-            className="text-xs text-[#a0a0a0] hover:text-white underline disabled:opacity-50"
-          >
-            {diagLoading ? "Verificando..." : "Atualizar"}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => window.open("/api/admin/diagnostico/envio", "_blank")}
+              className="text-xs text-yellow-400 hover:text-yellow-300 underline"
+            >
+              🧪 Testar envio real
+            </button>
+            <button
+              onClick={carregarDiag}
+              disabled={diagLoading}
+              className="text-xs text-[#a0a0a0] hover:text-white underline disabled:opacity-50"
+            >
+              {diagLoading ? "Verificando..." : "Atualizar"}
+            </button>
+          </div>
         </div>
         {diag ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">

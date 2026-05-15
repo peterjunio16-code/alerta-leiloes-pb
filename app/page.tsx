@@ -9,6 +9,7 @@ import { SimuladorOportunidade } from "@/components/landing/SimuladorOportunidad
 import { ComparacaoInvestimento } from "@/components/landing/ComparacaoInvestimento";
 import { Planos } from "@/components/landing/Planos";
 import { ProvasSocial } from "@/components/landing/ProvasSocial";
+import { BlogPreview } from "@/components/landing/BlogPreview";
 import { FAQ } from "@/components/landing/FAQ";
 import { SegurancaJuridica } from "@/components/landing/SegurancaJuridica";
 import { CTAFinal } from "@/components/landing/CTAFinal";
@@ -30,6 +31,7 @@ export default function HomePage() {
         <ComparacaoInvestimento />
         <Planos />
         <ProvasSocial />
+        <BlogPreview />
         <FAQ />
         <SegurancaJuridica />
         <CTAFinal />
