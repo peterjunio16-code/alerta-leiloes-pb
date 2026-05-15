@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { sendWhatsAppMessage } from "@/lib/whatsapp/client";
+import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp/client";
 import type { Database } from "@/lib/supabase/types";
-
-type SeqRow = Database["public"]["Tables"]["sequencias_nutricao"]["Row"] & {
-  leads: { nome: string; whatsapp: string } | null;
-};
 import {
   getSequenciaD1,
   getSequenciaD3,
@@ -13,10 +9,25 @@ import {
   getSequenciaD14,
 } from "@/lib/whatsapp/messages";
 
-const SEQUENCIA_MAP: Record<number, (nome: string) => string> = {
-  1: getSequenciaD1,
-  3: getSequenciaD3,
-  7: getSequenciaD7,
+type SeqRow = Database["public"]["Tables"]["sequencias_nutricao"]["Row"] & {
+  leads: { nome: string; whatsapp: string } | null;
+};
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://alerta-leiloes-pb.vercel.app";
+
+// Nome do template e parâmetros para cada dia
+const TEMPLATE_MAP: Record<number, (nome: string) => { name: string; params: string[] }> = {
+  1:  (nome) => ({ name: "nutricao_leiloes_d1",  params: [nome] }),
+  3:  (nome) => ({ name: "nutricao_leiloes_d3",  params: [nome, `${APP_URL}/radar`] }),
+  7:  (nome) => ({ name: "nutricao_leiloes_d7",  params: [nome, `${APP_URL}/radar`] }),
+  14: (nome) => ({ name: "nutricao_leiloes_d14", params: [nome, `${APP_URL}/radar`] }),
+};
+
+// Fallback em texto livre caso o template ainda não esteja aprovado
+const FALLBACK_MAP: Record<number, (nome: string) => string> = {
+  1:  getSequenciaD1,
+  3:  getSequenciaD3,
+  7:  getSequenciaD7,
   14: getSequenciaD14,
 };
 
@@ -29,6 +40,7 @@ export async function GET(request: NextRequest) {
   const supabase = createServiceClient();
   const now = new Date();
   let processed = 0;
+  let errors = 0;
 
   for (const dia of [1, 3, 7, 14]) {
     const cutoff = new Date(now);
@@ -49,25 +61,34 @@ export async function GET(request: NextRequest) {
       const lead = seq.leads;
       if (!lead) continue;
 
-      const messageFn = SEQUENCIA_MAP[dia];
-      if (!messageFn) continue;
+      const templateFn = TEMPLATE_MAP[dia];
+      const fallbackFn = FALLBACK_MAP[dia];
+      if (!templateFn) continue;
+
+      const { name, params } = templateFn(lead.nome);
 
       try {
-        await sendWhatsAppMessage(lead.whatsapp, messageFn(lead.nome));
+        // Tenta template aprovado primeiro
+        try {
+          await sendWhatsAppTemplate(lead.whatsapp, name, "pt_BR", params);
+        } catch {
+          // Fallback: texto livre (só funciona dentro da janela 24h)
+          await sendWhatsAppMessage(lead.whatsapp, fallbackFn(lead.nome));
+        }
+
         await supabase
           .from("sequencias_nutricao")
           .update({ enviado: true, enviado_em: now.toISOString() })
           .eq("id", seq.id);
         processed++;
-        await new Promise((r) => setTimeout(r, 500));
       } catch (err) {
-        console.error(
-          `Failed to send sequence day ${dia} to ${lead.whatsapp}:`,
-          err
-        );
+        console.error(`Failed to send sequence day ${dia} to ${lead.whatsapp}:`, err);
+        errors++;
       }
+
+      await new Promise((r) => setTimeout(r, 500));
     }
   }
 
-  return NextResponse.json({ success: true, processed });
+  return NextResponse.json({ success: true, processed, errors });
 }

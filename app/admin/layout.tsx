@@ -8,25 +8,28 @@ import { type AdminRole } from "@/lib/admin/users";
 type NavItem = { href: string; label: string; icon: string; roles: AdminRole[] };
 
 const navItems: NavItem[] = [
-  { href: "/admin",             label: "Dashboard",        icon: "📊", roles: ["super_admin","editor","viewer"] },
-  { href: "/admin/leads",       label: "Leads",            icon: "👥", roles: ["super_admin","editor","viewer"] },
-  { href: "/admin/imoveis",     label: "Imóveis",          icon: "🏠", roles: ["super_admin","editor","imoveis_only"] },
-  { href: "/admin/assinantes",  label: "Assinantes Radar", icon: "🎯", roles: ["super_admin"] },
-  { href: "/admin/aplicacoes",  label: "Candidaturas",     icon: "📋", roles: ["super_admin","editor","viewer"] },
-  { href: "/admin/blog",        label: "Blog",             icon: "✍️", roles: ["super_admin","editor"] },
-  { href: "/admin/usuarios",    label: "Usuários",         icon: "🔐", roles: ["super_admin"] },
+  { href: "/admin",              label: "Dashboard",        icon: "📊", roles: ["super_admin","editor","viewer"] },
+  { href: "/admin/leads",        label: "Leads",            icon: "👥", roles: ["super_admin","editor","viewer"] },
+  { href: "/admin/imoveis",      label: "Imóveis",          icon: "🏠", roles: ["super_admin","editor","imoveis_only"] },
+  { href: "/admin/assinantes",   label: "Assinantes Radar", icon: "🎯", roles: ["super_admin"] },
+  { href: "/admin/aplicacoes",   label: "Candidaturas",     icon: "📋", roles: ["super_admin","editor","viewer"] },
+  { href: "/admin/blog",         label: "Blog",             icon: "✍️", roles: ["super_admin","editor"] },
+  { href: "/admin/templates",    label: "Templates WA",     icon: "💬", roles: ["super_admin"] },
+  { href: "/admin/usuarios",     label: "Usuários",         icon: "🔐", roles: ["super_admin"] },
 ];
 
 const ROLE_LABELS: Record<AdminRole, string> = {
-  super_admin: "Super Admin",
-  editor: "Editor",
-  viewer: "Visualizador",
+  super_admin:  "Super Admin",
+  editor:       "Editor",
+  viewer:       "Visualizador",
+  imoveis_only: "Imóveis",
 };
 
 const ROLE_COLORS: Record<AdminRole, string> = {
-  super_admin: "text-gold bg-gold/10",
-  editor: "text-blue-400 bg-blue-400/10",
-  viewer: "text-slate-400 bg-slate-400/10",
+  super_admin:  "text-gold bg-gold/10",
+  editor:       "text-blue-400 bg-blue-400/10",
+  viewer:       "text-slate-400 bg-slate-400/10",
+  imoveis_only: "text-emerald-400 bg-emerald-400/10",
 };
 
 function decodeSessionClient(token: string): { nome: string; role: AdminRole } | null {
