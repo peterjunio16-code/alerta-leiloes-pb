@@ -88,12 +88,30 @@ export async function POST(request: NextRequest) {
       { onConflict: "lead_id" }
     );
 
-    // Remove from free group nurture (cancel pending sequences)
+    // Remove gratuito nurture sequences that haven't been sent yet
     await supabase
       .from("sequencias_nutricao")
       .delete()
       .eq("lead_id", leadId)
+      .eq("tipo", "gratuito")
       .eq("enviado", false);
+
+    // Create Radar onboarding sequence (D+1, D+3, D+7, D+30)
+    // Only create days that don't already exist for this lead
+    const { data: existingRadarSeqs } = await supabase
+      .from("sequencias_nutricao")
+      .select("dia")
+      .eq("lead_id", leadId)
+      .eq("tipo", "radar");
+
+    const existingDays = new Set((existingRadarSeqs ?? []).map((s) => s.dia));
+    const radarDays = [1, 3, 7, 30].filter((d) => !existingDays.has(d));
+
+    if (radarDays.length > 0) {
+      await supabase.from("sequencias_nutricao").insert(
+        radarDays.map((dia) => ({ lead_id: leadId, dia, tipo: "radar" }))
+      );
+    }
 
     // Mark as radar subscriber in leads table
     await supabase

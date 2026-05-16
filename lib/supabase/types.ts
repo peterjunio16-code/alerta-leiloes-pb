@@ -10,6 +10,9 @@ export type Database = {
           whatsapp: string;
           origem: string;
           status: string;
+          boas_vindas_enviado: boolean;
+          score_mentoria: number;
+          score_mentoria_em: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -19,6 +22,9 @@ export type Database = {
           whatsapp: string;
           origem?: "grupo" | "radar" | "mentoria";
           status?: "novo" | "nutrição" | "cliente" | "inativo";
+          boas_vindas_enviado?: boolean;
+          score_mentoria?: number;
+          score_mentoria_em?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -28,6 +34,9 @@ export type Database = {
           whatsapp?: string;
           origem?: "grupo" | "radar" | "mentoria";
           status?: "novo" | "nutrição" | "cliente" | "inativo";
+          boas_vindas_enviado?: boolean;
+          score_mentoria?: number;
+          score_mentoria_em?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -190,6 +199,7 @@ export type Database = {
           id: string;
           lead_id: string;
           dia: number;
+          tipo: "gratuito" | "radar";
           enviado: boolean;
           enviado_em: string | null;
           created_at: string;
@@ -198,6 +208,7 @@ export type Database = {
           id?: string;
           lead_id: string;
           dia: number;
+          tipo?: "gratuito" | "radar";
           enviado?: boolean;
           enviado_em?: string | null;
           created_at?: string;
@@ -206,6 +217,7 @@ export type Database = {
           id?: string;
           lead_id?: string;
           dia?: number;
+          tipo?: "gratuito" | "radar";
           enviado?: boolean;
           enviado_em?: string | null;
           created_at?: string;

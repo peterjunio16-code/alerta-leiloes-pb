@@ -441,63 +441,57 @@ const TEMPLATES = [
   },
 
   // ─────────────────────────────────────────────
-  // 15. LEMBRETE AULA 24H (UTILITY)
+  // 15. LEMBRETE REUNIÃO 24H (UTILITY)
   // ─────────────────────────────────────────────
   {
-    name: "mentoria_aula_amanha",
+    name: "mentoria_reuniao_amanha",
     category: "UTILITY",
     language: "pt_BR",
     components: [
       {
         type: "HEADER",
         format: "TEXT",
-        text: "Sua aula e amanha",
+        text: "Sua reuniao e amanha",
       },
       {
         type: "BODY",
-        text: "Oi {{1}}, lembrando que sua aula da Mentoria é amanhã:\n\n📅 *{{2}}*\n⏰ Horário: *{{3}}*\n📚 Tema: *{{4}}*\n\nPrepare suas dúvidas e tenha caneta e caderno em mãos. Até lá!",
+        text: "Oi {{1}}, lembrando que sua reunião de mentoria é amanhã:\n\n📅 *{{2}}*\n⏰ Horário: *{{3}}*\n\nPrepare suas dúvidas e os imóveis que você quer analisar. Até lá!",
         example: {
           body_text: [[
             "Peter",
             "22/06/2026",
             "19h",
-            "Análise jurídica de leilões",
           ]],
         },
       },
       {
-        type: "BUTTONS",
-        buttons: [
-          { type: "URL", text: "Entrar na sala", url: "https://alerta-leiloes-pb.vercel.app/mentoria" },
-        ],
+        type: "FOOTER",
+        text: "Mentoria Lance Certo — reunião 1:1",
       },
     ],
   },
 
   // ─────────────────────────────────────────────
-  // 16. MATERIAL NOVO MENTORIA (MARKETING)
+  // 16. RESUMO PÓS-REUNIÃO MENTORIA (UTILITY)
   // ─────────────────────────────────────────────
   {
-    name: "mentoria_material_novo",
-    category: "MARKETING",
+    name: "mentoria_pos_reuniao",
+    category: "UTILITY",
     language: "pt_BR",
     components: [
       {
         type: "BODY",
-        text: "Olá {{1}}, disponibilizamos um novo material exclusivo na área de membros:\n\n📚 *{{2}}*\n📝 {{3}}\n\nO material já está liberado para você consultar quando quiser.",
+        text: "Oi {{1}}, obrigado pela nossa reunião de hoje! 🤝\n\nPróximos passos combinados:\n📌 {{2}}\n\nQualquer dúvida que surgir, me chame aqui. Vamos em frente!",
         example: {
           body_text: [[
             "Peter",
-            "Guia completo de imissão na posse",
-            "PDF com modelos de petição e jurisprudência atualizada",
+            "Analisar os editais dos 3 imóveis discutidos e retornar com dúvidas",
           ]],
         },
       },
       {
-        type: "BUTTONS",
-        buttons: [
-          { type: "URL", text: "Acessar material", url: "https://alerta-leiloes-pb.vercel.app/mentoria" },
-        ],
+        type: "FOOTER",
+        text: "Mentoria Lance Certo — reunião 1:1",
       },
     ],
   },

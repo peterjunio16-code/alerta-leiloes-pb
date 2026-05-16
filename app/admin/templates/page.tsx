@@ -36,8 +36,8 @@ const TEMPLATES_JORNADA = [
   // Funil Mentoria
   { name: "convite_mentoria_pb",      descricao: "Convite para candidatura mentoria",  categoria: "MARKETING", quando: "Manual",          funil: "Mentoria" },
   { name: "mentoria_aprovada",        descricao: "Candidatura aprovada",                categoria: "UTILITY",   quando: "Aprovação",       funil: "Mentoria" },
-  { name: "mentoria_aula_amanha",     descricao: "Lembrete aula 24h antes",            categoria: "UTILITY",   quando: "24h antes",       funil: "Mentoria" },
-  { name: "mentoria_material_novo",   descricao: "Novo material disponível",            categoria: "MARKETING", quando: "Manual",          funil: "Mentoria" },
+  { name: "mentoria_reuniao_amanha",  descricao: "Lembrete reunião 1:1 24h antes",     categoria: "UTILITY",   quando: "24h antes",       funil: "Mentoria" },
+  { name: "mentoria_pos_reuniao",     descricao: "Resumo e próximos passos pós-reunião", categoria: "UTILITY",   quando: "Após reunião",    funil: "Mentoria" },
   { name: "mentoria_checkin_semanal", descricao: "Check-in de progresso semanal",      categoria: "MARKETING", quando: "Semanal",         funil: "Mentoria" },
 ];
 
