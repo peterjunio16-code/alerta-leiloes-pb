@@ -204,7 +204,7 @@ export default async function ImovelPage({ params }: Props) {
               📄 Ver edital completo
             </a>
           )}
-          {imovel.link && (
+          {imovel.link && !imovel.link.includes("leilaoninja.com.br") && (
             <a
               href={imovel.link}
               target="_blank"
