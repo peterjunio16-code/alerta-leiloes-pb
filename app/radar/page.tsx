@@ -121,25 +121,16 @@ export default function RadarPage() {
           {/* VSL */}
           <div className="relative max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10"
             style={{ boxShadow: "0 0 60px rgba(196,150,42,0.12), 0 30px 60px rgba(0,0,0,0.6)" }}>
-            <div className="relative w-full aspect-video bg-night-900">
-              <iframe
-                src="https://www.youtube.com/embed/FKL3iVn4RtU?rel=0&modestbranding=1"
-                title="Radar PB — Como funciona"
-                className="absolute inset-0 w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                loading="lazy"
-              />
+            <div className="relative w-full aspect-video bg-[#0d1117] flex flex-col items-center justify-center gap-4">
+              <div className="text-5xl">🎬</div>
+              <p className="text-white font-bold text-lg">Vídeo em breve</p>
+              <p className="text-[#a0a0a0] text-sm text-center px-8">
+                Estamos preparando um vídeo explicando como o Radar PB funciona.<br/>
+                Assine agora e receba os alertas antes da concorrência!
+              </p>
             </div>
             <div className="bg-night-900/80 px-4 py-2 text-center border-t border-white/5">
-              <a
-                href="https://youtu.be/FKL3iVn4RtU"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-slate-500 hover:text-gold transition-colors"
-              >
-                ▶ Assistir diretamente no YouTube
-              </a>
+              <p className="text-xs text-slate-500">📹 Vídeo explicativo em breve</p>
             </div>
           </div>
         </div>
