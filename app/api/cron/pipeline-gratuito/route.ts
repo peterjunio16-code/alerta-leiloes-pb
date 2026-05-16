@@ -19,10 +19,11 @@ function fmt(n: number) {
 }
 
 function autorizadoCron(request: NextRequest): boolean {
-  const auth = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
   if (!secret) return true;
-  return auth === `Bearer ${secret}`;
+  const authHeader = request.headers.get("authorization");
+  const querySecret = new URL(request.url).searchParams.get("secret");
+  return authHeader === `Bearer ${secret}` || querySecret === secret;
 }
 
 export async function GET(request: NextRequest) {
