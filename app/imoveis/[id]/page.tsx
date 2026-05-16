@@ -199,19 +199,9 @@ export default async function ImovelPage({ params }: Props) {
               href={imovel.edital_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#16213e] border border-[#0f3460] hover:border-[#e63946] text-white font-semibold py-4 px-6 rounded-xl transition-colors"
-            >
-              📄 Ver edital completo
-            </a>
-          )}
-          {imovel.link && !imovel.link.includes("leilaoninja.com.br") && (
-            <a
-              href={imovel.link}
-              target="_blank"
-              rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 bg-[#0f3460] hover:bg-[#1a4a8a] text-white font-semibold py-4 px-6 rounded-xl transition-colors"
             >
-              🔗 Ver no leiloeiro
+              🔗 Ver no site do leiloeiro
             </a>
           )}
         </div>

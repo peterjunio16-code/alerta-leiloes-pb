@@ -14,6 +14,7 @@ export interface LeilaoNinjaItem {
   link?: string;
   imagem_url?: string;
   data_leilao?: string;
+  edital_url?: string;
 }
 
 function getLocalChromePath(): string | null {
@@ -54,6 +55,31 @@ function parseBRL(raw: string): number | undefined {
   const cleaned = raw.replace(/R\$\s*/g, "").replace(/\./g, "").replace(",", ".");
   const num = parseFloat(cleaned.replace(/[^\d.]/g, ""));
   return isNaN(num) || num === 0 ? undefined : num;
+}
+
+// Extrai o link público do leiloeiro na página de detalhe do LeilãoNinja
+async function extractLeiloeiroUrl(
+  page: Awaited<ReturnType<ReturnType<typeof chromium.launch>["newPage"]>>,
+  ninjaUrl: string
+): Promise<string | undefined> {
+  try {
+    await page.goto(ninjaUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.waitForTimeout(1000);
+    const url = await page.evaluate(() => {
+      // Busca botão "Ver no site do leiloeiro"
+      const links = Array.from(document.querySelectorAll("a"));
+      const btn = links.find(
+        (a) =>
+          a.textContent?.toLowerCase().includes("ver no site") ||
+          a.textContent?.toLowerCase().includes("site do leiloeiro") ||
+          a.textContent?.toLowerCase().includes("ver no leiloeiro")
+      );
+      return btn?.href ?? null;
+    });
+    return url ?? undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 // Extrai os cards de uma página já carregada
@@ -119,6 +145,7 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
   });
   const page = await context.newPage();
+  const detailPage = await context.newPage(); // Página separada para detalhes
 
   const items: LeilaoNinjaItem[] = [];
   const errors: string[] = [];
@@ -224,6 +251,12 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
             if (match) dataLeilao = `${match[3]}-${match[2]}-${match[1]}`;
           }
 
+          // Visita a página do imóvel no LeilãoNinja para pegar o link público do leiloeiro
+          let edital_url: string | undefined;
+          if (l.link) {
+            edital_url = await extractLeiloeiroUrl(detailPage, l.link);
+          }
+
           items.push({
             titulo: l.titulo,
             cidade,
@@ -235,6 +268,7 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
             link: l.link || undefined,
             imagem_url: l.imgSrc,
             data_leilao: dataLeilao,
+            edital_url,
           });
           if (l.link) knownLinks.add(l.link); // Evita duplicata dentro da mesma sessão
         }
