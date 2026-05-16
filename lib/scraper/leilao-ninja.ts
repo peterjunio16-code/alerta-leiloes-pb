@@ -322,3 +322,64 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
 
   return { saved, skipped, errors };
 }
+
+/**
+ * Enriquece imóveis existentes sem edital_url:
+ * visita a página deles no LeilãoNinja e extrai o link público do leiloeiro.
+ */
+export async function enrichEditalUrls(max = 10): Promise<{ enriched: number; errors: string[] }> {
+  const email = process.env.LEILAO_NINJA_EMAIL;
+  const password = process.env.LEILAO_NINJA_PASSWORD;
+  if (!email || !password) return { enriched: 0, errors: ["Credenciais LeilãoNinja ausentes"] };
+
+  const supabase = createServiceClient();
+
+  // Busca imóveis com link do LeilãoNinja mas sem edital_url
+  const { data: pendentes } = await supabase
+    .from("imoveis")
+    .select("id, link")
+    .like("link", "%leilaoninja.com%")
+    .is("edital_url", null)
+    .limit(max);
+
+  if (!pendentes?.length) return { enriched: 0, errors: [] };
+
+  const browser = await launchBrowser();
+  const context = await browser.newContext({
+    userAgent:
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  });
+  const page = await context.newPage();
+  const errors: string[] = [];
+  let enriched = 0;
+
+  try {
+    // Login
+    await page.goto("https://leilaoninja.com/login", { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForTimeout(2000);
+    await page.fill('input[type="email"], input[name="email"]', email);
+    await page.fill('input[type="password"], input[name="password"]', password);
+    await page.click('button[type="submit"]');
+    await page.waitForURL("**/member/**", { timeout: 30000 });
+
+    for (const imovel of pendentes) {
+      if (!imovel.link) continue;
+      try {
+        const edital_url = await extractLeiloeiroUrl(page, imovel.link);
+        if (edital_url) {
+          await supabase.from("imoveis").update({ edital_url }).eq("id", imovel.id);
+          enriched++;
+        }
+        await page.waitForTimeout(800);
+      } catch (err) {
+        errors.push(`Erro ao enriquecer ${imovel.id}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  } catch (err) {
+    errors.push(`Erro geral: ${err instanceof Error ? err.message : String(err)}`);
+  } finally {
+    await browser.close();
+  }
+
+  return { enriched, errors };
+}

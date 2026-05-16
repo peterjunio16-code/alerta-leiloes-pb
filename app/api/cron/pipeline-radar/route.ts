@@ -14,7 +14,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { scrapeLeilaoNinja } from "@/lib/scraper/leilao-ninja";
+import { scrapeLeilaoNinja, enrichEditalUrls } from "@/lib/scraper/leilao-ninja";
 import { gerarScoreIA } from "@/lib/ai/score";
 import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp/client";
 
@@ -66,6 +66,16 @@ async function rodarPipeline() {
   } catch (err) {
     log.push(`  LeilãoNinja ERROR: ${err instanceof Error ? err.message : String(err)}`);
     // Continua mesmo se o scrape falhar — pode haver imóveis pendentes no banco
+  }
+
+  // ── 1b. Enriquece edital_url de imóveis existentes sem link público ──
+  log.push(`[${ts()}] 🔗 Enriquecendo links públicos dos leiloeiros...`);
+  try {
+    const enrichResult = await enrichEditalUrls(10);
+    log.push(`  ${enrichResult.enriched} imóveis com link do leiloeiro adicionado`);
+    if (enrichResult.errors.length) log.push(`  Erros: ${enrichResult.errors.slice(0, 2).join(", ")}`);
+  } catch (err) {
+    log.push(`  Enrich ERROR: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   // ── 2. Score IA nos imóveis novos sem análise ────────────────────
