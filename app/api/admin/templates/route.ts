@@ -602,14 +602,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Busca templates já existentes para pular duplicados
+  const forcar = body.forcar === true; // força atualização de templates já existentes
+
+  // Busca templates existentes com ID (necessário para update)
   const existentesRes = await fetch(
-    `${API}/${wabaId}/message_templates?limit=100&fields=name,status`,
+    `${API}/${wabaId}/message_templates?limit=100&fields=name,status,id`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const existentesData = await existentesRes.json();
-  const existentes: Set<string> = new Set(
-    (existentesData?.data ?? []).map((t: { name: string }) => t.name)
+  const existentesMap: Map<string, string> = new Map(
+    (existentesData?.data ?? []).map((t: { name: string; id: string }) => [t.name, t.id])
   );
 
   const lista = apenas ? TEMPLATES.filter((t) => t.name === apenas) : TEMPLATES;
@@ -617,8 +619,10 @@ export async function POST(request: NextRequest) {
   // Submete em paralelo (mais rápido, evita timeout)
   const resultados = await Promise.all(
     lista.map(async (template) => {
-      // Pula templates já existentes na Meta
-      if (existentes.has(template.name)) {
+      const templateId = existentesMap.get(template.name);
+
+      // Se já existe e não é forçado, pula
+      if (templateId && !forcar) {
         return {
           nome: template.name,
           http: 200,
@@ -627,15 +631,32 @@ export async function POST(request: NextRequest) {
           detalhe: { skipped: true },
         };
       }
+
       try {
-        const res = await fetch(`${API}/${wabaId}/message_templates`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(template),
-        });
+        let res: Response;
+
+        if (templateId && forcar) {
+          // UPDATE: POST /{template_id} com os novos componentes
+          res = await fetch(`${API}/${templateId}`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ components: template.components }),
+          });
+        } else {
+          // CREATE: POST /{waba_id}/message_templates
+          res = await fetch(`${API}/${wabaId}/message_templates`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(template),
+          });
+        }
+
         const data = await res.json();
         const errMeta = data?.error;
         const detailedError = errMeta
@@ -652,7 +673,9 @@ export async function POST(request: NextRequest) {
         return {
           nome: template.name,
           http: res.status,
-          status: res.ok ? "✅ Enviado para aprovação" : "❌ Erro",
+          status: res.ok
+            ? (templateId && forcar ? "🔄 Atualizado" : "✅ Enviado para aprovação")
+            : "❌ Erro",
           erro_meta: detailedError,
           detalhe: data,
         };
@@ -668,8 +691,8 @@ export async function POST(request: NextRequest) {
     })
   );
 
-  const sucesso = resultados.filter((r) => r.status.startsWith("✅")).length;
-  const falhas = resultados.length - sucesso;
+  const sucesso = resultados.filter((r) => r.status.startsWith("✅") || r.status.startsWith("🔄")).length;
+  const falhas = resultados.filter((r) => r.status.startsWith("❌")).length;
 
   return NextResponse.json({
     waba_id: wabaId,

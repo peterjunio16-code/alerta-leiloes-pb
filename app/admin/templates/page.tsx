@@ -9,7 +9,7 @@ type TemplateExistente = {
   language: string;
 };
 
-type Resultado = { nome: string; status: string; detalhe: unknown };
+type Resultado = { nome: string; status: string; http?: number; erro_meta?: string | null; detalhe: unknown };
 
 const STATUS_COR: Record<string, string> = {
   APPROVED: "text-green-400 bg-green-500/10 border-green-500/20",
@@ -19,27 +19,53 @@ const STATUS_COR: Record<string, string> = {
 };
 
 const TEMPLATES_JORNADA = [
-  { name: "boas_vindas_alerta",     descricao: "Enviado ao se cadastrar no grupo", categoria: "UTILITY",   quando: "Cadastro" },
-  { name: "alerta_imovel_gratuito", descricao: "Alerta de imóvel para leads free", categoria: "MARKETING", quando: "Publicar imóvel" },
-  { name: "alerta_imovel_radar",    descricao: "Alerta premium para assinantes",   categoria: "MARKETING", quando: "Publicar imóvel" },
-  { name: "lembrete_leilao_48h",    descricao: "Lembrete 48h antes do leilão",     categoria: "UTILITY",   quando: "48h antes" },
-  { name: "nutricao_leiloes_d1",    descricao: "Nutrição — dia 1 após cadastro",   categoria: "MARKETING", quando: "Dia +1" },
-  { name: "nutricao_leiloes_d3",    descricao: "Nutrição — dia 3 após cadastro",   categoria: "MARKETING", quando: "Dia +3" },
-  { name: "nutricao_leiloes_d7",    descricao: "Nutrição — dia 7 após cadastro",   categoria: "MARKETING", quando: "Dia +7" },
-  { name: "nutricao_leiloes_d14",   descricao: "Nutrição — dia 14 após cadastro",  categoria: "MARKETING", quando: "Dia +14" },
-  { name: "convite_mentoria_pb",    descricao: "Convite para candidatura mentoria", categoria: "MARKETING", quando: "Manual" },
+  // Funil Lead Gratuito
+  { name: "boas_vindas_alerta",       descricao: "Enviado ao se cadastrar no grupo",  categoria: "UTILITY",   quando: "Cadastro",       funil: "Gratuito" },
+  { name: "alerta_imovel_gratuito",   descricao: "Alerta de imóvel para leads free",   categoria: "MARKETING", quando: "Publicar imóvel", funil: "Gratuito" },
+  { name: "lembrete_leilao_48h",      descricao: "Lembrete 48h antes do leilão",       categoria: "UTILITY",   quando: "48h antes",       funil: "Gratuito" },
+  { name: "nutricao_leiloes_d1",      descricao: "Nutrição — dia 1 após cadastro",     categoria: "MARKETING", quando: "Dia +1",          funil: "Gratuito" },
+  { name: "nutricao_leiloes_d3",      descricao: "Nutrição — dia 3 após cadastro",     categoria: "MARKETING", quando: "Dia +3",          funil: "Gratuito" },
+  { name: "nutricao_leiloes_d7",      descricao: "Nutrição — dia 7 após cadastro",     categoria: "MARKETING", quando: "Dia +7",          funil: "Gratuito" },
+  { name: "nutricao_leiloes_d14",     descricao: "Nutrição — dia 14 após cadastro",    categoria: "MARKETING", quando: "Dia +14",         funil: "Gratuito" },
+  // Funil Radar PB (pagos)
+  { name: "boas_vindas_radar",        descricao: "Confirmação de assinatura Radar",    categoria: "UTILITY",   quando: "Pós-pagamento",   funil: "Radar" },
+  { name: "alerta_imovel_radar",      descricao: "Alerta premium para assinantes",     categoria: "MARKETING", quando: "Publicar imóvel", funil: "Radar" },
+  { name: "radar_resumo_semanal",     descricao: "Resumo semanal de oportunidades",    categoria: "MARKETING", quando: "Semanal",         funil: "Radar" },
+  { name: "radar_destaque_score_alto",descricao: "Imóvel com score acima de 9",        categoria: "MARKETING", quando: "Score >9",        funil: "Radar" },
+  { name: "radar_renovacao_7d",       descricao: "Lembrete renovação 7 dias antes",    categoria: "UTILITY",   quando: "7d antes",        funil: "Radar" },
+  // Funil Mentoria
+  { name: "convite_mentoria_pb",      descricao: "Convite para candidatura mentoria",  categoria: "MARKETING", quando: "Manual",          funil: "Mentoria" },
+  { name: "mentoria_aprovada",        descricao: "Candidatura aprovada",                categoria: "UTILITY",   quando: "Aprovação",       funil: "Mentoria" },
+  { name: "mentoria_aula_amanha",     descricao: "Lembrete aula 24h antes",            categoria: "UTILITY",   quando: "24h antes",       funil: "Mentoria" },
+  { name: "mentoria_material_novo",   descricao: "Novo material disponível",            categoria: "MARKETING", quando: "Manual",          funil: "Mentoria" },
+  { name: "mentoria_checkin_semanal", descricao: "Check-in de progresso semanal",      categoria: "MARKETING", quando: "Semanal",         funil: "Mentoria" },
 ];
+
+const FUNIL_COR: Record<string, string> = {
+  Gratuito:  "text-blue-400 bg-blue-500/10",
+  Radar:     "text-yellow-400 bg-yellow-500/10",
+  Mentoria:  "text-purple-400 bg-purple-500/10",
+};
 
 export default function TemplatesPage() {
   const [existentes, setExistentes] = useState<TemplateExistente[]>([]);
   const [wabaId, setWabaId] = useState<string | null>(null);
+  const [wabaIdManual, setWabaIdManual] = useState("");
   const [loading, setLoading] = useState(true);
   const [enviando, setEnviando] = useState(false);
+  const [forcando, setForcando] = useState(false);
   const [resultados, setResultados] = useState<Resultado[]>([]);
+
+  // Recupera WABA ID salvo no localStorage ao montar
+  useEffect(() => {
+    const salvo = typeof window !== "undefined" ? localStorage.getItem("waba_id") : null;
+    if (salvo) setWabaIdManual(salvo);
+  }, []);
 
   const carregar = async () => {
     setLoading(true);
-    const res = await fetch("/api/admin/templates");
+    const qs = wabaIdManual ? `?waba_id=${encodeURIComponent(wabaIdManual)}` : "";
+    const res = await fetch(`/api/admin/templates${qs}`);
     if (res.ok) {
       const data = await res.json();
       setExistentes(data.templates_existentes ?? []);
@@ -48,17 +74,70 @@ export default function TemplatesPage() {
     setLoading(false);
   };
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); /* eslint-disable-next-line */ }, [wabaIdManual]);
+
+  const forcarAtualizacao = async () => {
+    if (!confirm(`Forçar atualização de todos os ${TEMPLATES_JORNADA.length} templates na Meta?\n\nTemplates aprovados voltarão para PENDING (revisão 24-72h). Use só quando mudar URLs ou conteúdo dos botões.`)) return;
+    setForcando(true);
+    setResultados([]);
+    try {
+      const res = await fetch("/api/admin/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ waba_id_manual: wabaIdManual || null, forcar: true }),
+      });
+      const data = await res.json();
+      setResultados(data.resultados ?? []);
+      const sucesso = data.sucesso ?? 0;
+      const falhas = data.falhas ?? 0;
+      if (falhas === 0) {
+        alert(`✅ ${sucesso} templates atualizados!\n\nVoltarão para PENDING e serão re-aprovados em 24-72h.`);
+      } else {
+        alert(`⚠️ ${sucesso} atualizados, ${falhas} com erro.`);
+      }
+    } catch (err) {
+      alert(`❌ Erro: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setForcando(false);
+      await carregar();
+    }
+  };
 
   const enviarTodos = async () => {
-    if (!confirm("Enviar todos os 9 templates para aprovação na Meta? O processo pode levar alguns segundos.")) return;
+    if (!confirm(`Enviar todos os ${TEMPLATES_JORNADA.length} templates para aprovação na Meta? O processo pode levar alguns segundos.`)) return;
     setEnviando(true);
     setResultados([]);
-    const res = await fetch("/api/admin/templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
-    const data = await res.json();
-    setResultados(data.resultados ?? []);
-    setEnviando(false);
-    await carregar();
+    try {
+      const res = await fetch("/api/admin/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ waba_id_manual: wabaIdManual || null }),
+      });
+      const data = await res.json();
+
+      if (!res.ok && !data.resultados) {
+        alert(`❌ Falha na requisição (HTTP ${res.status})\n\n${data.error ?? data.erro ?? JSON.stringify(data).slice(0, 300)}`);
+        setEnviando(false);
+        return;
+      }
+
+      setResultados(data.resultados ?? []);
+
+      const sucesso = data.sucesso ?? 0;
+      const falhas = data.falhas ?? 0;
+      const primeiroErro = data.resultados?.find((r: Resultado) => r.erro_meta)?.erro_meta;
+
+      if (falhas === 0) {
+        alert(`✅ ${sucesso} templates enviados com sucesso!\n\nAguarde aprovação da Meta (24-72h).`);
+      } else {
+        alert(`⚠️ Resultado: ${sucesso} sucesso, ${falhas} falhas.\n\nPrimeiro erro Meta:\n${primeiroErro ?? "ver tabela abaixo"}`);
+      }
+    } catch (err) {
+      alert(`❌ Erro de conexão: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setEnviando(false);
+      await carregar();
+    }
   };
 
   const statusTemplate = (name: string): TemplateExistente | undefined =>
@@ -72,7 +151,7 @@ export default function TemplatesPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">Templates WhatsApp</h1>
           <p className="text-[#a0a0a0] text-sm mt-1">
-            Jornada completa do cliente — {aprovados}/{TEMPLATES_JORNADA.length} templates aprovados
+            Jornada completa (Gratuito + Radar + Mentoria) — {aprovados}/{TEMPLATES_JORNADA.length} templates aprovados
             {wabaId && <span className="ml-2 text-xs opacity-50">WABA: {wabaId}</span>}
           </p>
         </div>
@@ -81,13 +160,52 @@ export default function TemplatesPage() {
             🔄 Atualizar status
           </button>
           <button
+            onClick={forcarAtualizacao}
+            disabled={forcando || enviando}
+            className="text-xs font-semibold px-4 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg disabled:opacity-50 transition-colors"
+            title="Atualiza templates já existentes com novo conteúdo (URL, botões)"
+          >
+            {forcando ? "Atualizando..." : "🔁 Forçar atualização"}
+          </button>
+          <button
             onClick={enviarTodos}
-            disabled={enviando}
+            disabled={enviando || forcando}
             className="text-xs font-semibold px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50 transition-colors"
           >
             {enviando ? "Enviando..." : "🚀 Submeter todos à Meta"}
           </button>
         </div>
+      </div>
+
+      {/* WABA ID input */}
+      <div className="bg-[#16213e] border border-[#0f3460] rounded-xl p-4">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <label className="text-white font-semibold text-sm">🆔 WABA ID (WhatsApp Business Account ID)</label>
+          {wabaId && <span className="text-green-400 text-xs">✅ Carregado</span>}
+        </div>
+        <div className="flex gap-2 items-center">
+          <input
+            type="text"
+            placeholder="Cole aqui o ID (ex: 123456789012345)"
+            value={wabaIdManual}
+            onChange={(e) => setWabaIdManual(e.target.value.trim())}
+            className="flex-1 bg-[#0f1923] border border-[#0f3460] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#e63946] font-mono"
+          />
+          <button
+            onClick={() => {
+              localStorage.setItem("waba_id", wabaIdManual);
+              alert("✅ WABA ID salvo localmente");
+              carregar();
+            }}
+            disabled={!wabaIdManual}
+            className="px-4 py-2 bg-[#0f3460] hover:bg-[#1a4a8a] text-white text-sm font-medium rounded-lg disabled:opacity-50"
+          >
+            Salvar
+          </button>
+        </div>
+        <p className="text-[#a0a0a0] text-xs mt-2">
+          Encontre em <span className="font-mono">business.facebook.com</span> → Configurações da empresa → Contas do WhatsApp → clique em <strong>alertaleiloes</strong> → o ID aparece na URL ou nos detalhes.
+        </p>
       </div>
 
       {/* Aviso importante */}
@@ -102,12 +220,17 @@ export default function TemplatesPage() {
         <div className="bg-[#16213e] border border-[#0f3460] rounded-xl p-5 space-y-2">
           <p className="text-white font-semibold text-sm mb-3">Resultado do envio:</p>
           {resultados.map((r) => (
-            <div key={r.nome} className="flex items-center gap-3 text-sm">
+            <div key={r.nome} className="flex items-start gap-3 text-sm py-1.5 border-b border-[#0f3460]/30 last:border-0">
               <span className="text-[#a0a0a0] font-mono text-xs w-52 flex-shrink-0">{r.nome}</span>
-              <span className={r.status.startsWith("✅") ? "text-green-400" : "text-red-400"}>{r.status}</span>
-              {(r.detalhe as { error?: { message?: string } })?.error && (
-                <span className="text-red-300 text-xs">{(r.detalhe as { error: { message: string } }).error.message}</span>
-              )}
+              <div className="flex-1">
+                <span className={r.status.startsWith("✅") || r.status.startsWith("🔄") ? "text-green-400" : r.status.startsWith("⏭️") ? "text-[#a0a0a0]" : "text-red-400"}>{r.status}</span>
+                {r.http !== undefined && r.http > 0 && (
+                  <span className="text-[#a0a0a0] text-xs ml-2">HTTP {r.http}</span>
+                )}
+                {r.erro_meta && (
+                  <p className="text-red-300 text-xs mt-1 font-mono">{r.erro_meta}</p>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -118,7 +241,7 @@ export default function TemplatesPage() {
         <table className="w-full text-sm">
           <thead className="bg-[#0f3460]">
             <tr>
-              {["Template", "Descrição", "Quando dispara", "Categoria", "Status Meta"].map((h) => (
+              {["Funil", "Template", "Descrição", "Quando", "Categoria", "Status Meta"].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[#a0a0a0] uppercase">{h}</th>
               ))}
             </tr>
@@ -128,8 +251,12 @@ export default function TemplatesPage() {
               const atual = statusTemplate(t.name);
               const status = atual?.status ?? "NÃO ENVIADO";
               const corStatus = STATUS_COR[status] ?? "text-slate-400 bg-slate-500/10 border-slate-500/20";
+              const corFunil = FUNIL_COR[t.funil] ?? "text-slate-400 bg-slate-500/10";
               return (
                 <tr key={t.name} className="hover:bg-[#0f3460]/30 transition-colors">
+                  <td className="px-4 py-3">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${corFunil}`}>{t.funil}</span>
+                  </td>
                   <td className="px-4 py-3 font-mono text-xs text-white">{t.name}</td>
                   <td className="px-4 py-3 text-[#a0a0a0] text-xs">{t.descricao}</td>
                   <td className="px-4 py-3">
