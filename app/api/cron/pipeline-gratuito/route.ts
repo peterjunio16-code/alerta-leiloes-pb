@@ -12,7 +12,7 @@ import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp/client
 
 export const maxDuration = 300;
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://alerta-leiloes-pb.vercel.app";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "https://alerta-leiloes-pb.vercel.app").trim().replace(/\/$/, "");
 
 function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 });
