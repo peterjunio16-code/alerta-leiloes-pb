@@ -84,14 +84,22 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (!lead) {
-        // Novo contato — cadastra e envia boas-vindas
+        // Novo contato — cadastra, cria régua de nutrição e envia boas-vindas
         const nomeContato = (value?.contacts?.[0]?.profile?.name as string | null) ?? null;
-        await supabase.from("leads").insert({
+        const { data: novoLead } = await supabase.from("leads").insert({
           whatsapp: from,
           nome: nomeContato,
           status: "ativo",
           boas_vindas_enviado: true,
-        });
+        }).select("id").maybeSingle();
+
+        // Cria sequência de nutrição D+1, D+3, D+7, D+14
+        if (novoLead?.id) {
+          await supabase.from("sequencias_nutricao").insert(
+            [1, 3, 7, 14].map((dia) => ({ lead_id: novoLead.id, dia }))
+          );
+        }
+
         await sendWhatsAppMessage(from, MENSAGEM_BOAS_VINDAS);
       } else if (!lead.boas_vindas_enviado) {
         // Lead existente que ainda não recebeu boas-vindas

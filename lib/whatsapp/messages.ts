@@ -43,67 +43,87 @@ Bem-vindo(a) ao clube dos investidores que arrrematam com inteligência! 🏆`;
 }
 
 export function getSequenciaD1(nome: string): string {
-  return `Olá, ${nome}! 📚
+  return `${nome}, você recebeu nosso primeiro alerta hoje 🏠
 
-É o *Dia 1* da sua jornada com o Alerta Leilões PB.
+Notou que só mandamos *cidade, tipo e faixa de desconto*?
 
-Hoje quero te contar o que você pode *realmente esperar* do grupo:
+É proposital. O grupo gratuito recebe o sinal. Quem assina o *Radar PB* recebe tudo:
 
-✅ Alertas filtrados — não mandamos qualquer coisa
-✅ Score de 0 a 10 — você sabe exatamente o quanto cada imóvel vale
-✅ Sem juridiquês — análise em linguagem simples
+🔍 Score de oportunidade (0 a 10)
+⚠️ Ocupação e riscos jurídicos
+💰 Estimativa de retorno
+🏛️ Link direto do leiloeiro
+⏰ 48h antes do grupo gratuito
 
-Amanhã começo a te mostrar como lemos o edital de um leilão em 10 minutos. Fica ligado! 👀`;
+_Análise informativa. Não substitui advogado ou avaliação individual do edital._
+
+Amanhã te mostro o que o Radar viu num imóvel real. 👀`;
 }
 
 export function getSequenciaD3(nome: string): string {
-  return `${nome}, como lemos um edital de leilão em menos de 10 minutos 📋
+  const radar = (process.env.NEXT_PUBLIC_APP_URL ?? "https://alerta-leiloes-pb.vercel.app").trim().replace(/\/$/, "") + "/radar";
+  return `${nome}, aqui está o que o grupo gratuito *não* recebe 👇
 
-3 perguntas que respondem 80% dos riscos:
+Quando encontramos um apartamento em João Pessoa com 45% de desconto:
 
-1️⃣ *Ocupação:* O imóvel está ocupado? Por quem?
-2️⃣ *Ônus:* Há dívidas além do IPTU? (IPTU vai junto, resto não obrigatoriamente)
-3️⃣ *Valor de avaliação vs. lance:* Desconto real é acima de 40%
+❌ *Gratuito recebe:* "Desconto acima de 40% — veja no Radar"
+✅ *Radar PB recebe:*
+   ⭐ Score 8.2/10
+   🏠 Desocupado
+   📋 Sem ônus além do IPTU
+   💰 Avaliação: R$280k → Lance: R$154k
+   🏛️ Link direto: Cravo Leilões
+   📅 Leilão em 48h
 
-Guarda esse filtro. Vai te salvar de muita dor de cabeça. 💡
+A diferença entre ver a oportunidade e *agir* na oportunidade.
 
-Dúvidas? Responde aqui.`;
+Por R$37,90/mês:
+${radar}
+
+_Cancele quando quiser. Sem fidelidade._`;
 }
 
 export function getSequenciaD7(nome: string): string {
-  return `Case real para você analisar, ${nome} 🏘️
+  const radar = (process.env.NEXT_PUBLIC_APP_URL ?? "https://alerta-leiloes-pb.vercel.app").trim().replace(/\/$/, "") + "/radar";
+  return `Case real, ${nome} 🏘️
 
 *Apartamento — Bairro dos Estados, João Pessoa*
 📊 Avaliação: R$280.000
 🔨 Lance mínimo: R$140.000
-📉 Desconto: 50%
-⭐ Score Radar: 8/10
-📋 Status: Desocupado, sem ônus além do IPTU
+📉 Desconto: 50% | ⭐ Score: 8/10
+✅ Desocupado, sem ônus além do IPTU
 
-Esse imóvel foi arrematado por um membro do grupo em novembro. Hoje vale ~R$310k com a valorização do bairro.
+Arrematado por um assinante Radar PB. Hoje vale ~R$310k.
 
-Teria arrematado? Responde aqui 👇
+Quem estava no gratuito viu: *"Desconto acima de 40%".*
+Quem estava no Radar viu: *score, riscos, link do leiloeiro e 48h de vantagem.*
 
-(Quem assina o *Radar PB* recebeu esse alerta 48h antes do leilão)`;
+Teria arrematado com essas informações? 🤔
+
+Se sim, o Radar foi feito pra você:
+${radar}`;
 }
 
 export function getSequenciaD14(nome: string): string {
-  return `${nome}, chegou a hora de dar o próximo passo? 🎯
+  const radar = (process.env.NEXT_PUBLIC_APP_URL ?? "https://alerta-leiloes-pb.vercel.app").trim().replace(/\/$/, "") + "/radar";
+  return `${nome}, 14 dias de alertas. Chegou a hora de decidir 🎯
 
-Você já aprendeu os fundamentos. Já viu cases reais. Entende o filtro básico.
+Você já sabe que leilão tem oportunidade real.
+Você já viu imóveis com 40%+ de desconto passando pelo grupo.
 
-O *Radar PB* foi criado para quem quer *agir com inteligência*:
+A questão é: quando aparecer *o* imóvel certo, você vai ter as informações para agir?
 
-✅ Alertas 48h antes dos leilões
-✅ Score completo de cada imóvel
-✅ Análise jurídica resumida
-✅ Estimativa de lucro
+*Radar PB — R$37,90/mês:*
+✅ Score completo + análise de risco
+✅ Link direto do leiloeiro
+✅ 48h antes do grupo gratuito
+✅ Cancele quando quiser
 
-Por apenas *R$37,90/mês*. Cancele quando quiser.
+👉 ${radar}
 
-👉 Acesse agora: ${process.env.NEXT_PUBLIC_APP_URL}/radar
+Dúvida? Responde aqui que respondo pessoalmente. 🤝
 
-Tem dúvida? Responde aqui que eu respondo pessoalmente. 🤝`;
+_Análise informativa. Não substitui advogado, corretor ou avaliação individual do edital._`;
 }
 
 export function getMentoriaAdminAlert(dados: Record<string, unknown>): string {
