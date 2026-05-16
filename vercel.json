@@ -3,6 +3,14 @@
     {
       "path": "/api/cron/nutricao",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/pipeline-radar",
+      "schedule": "0 10,22 * * *"
+    },
+    {
+      "path": "/api/cron/pipeline-gratuito",
+      "schedule": "30 10,22 * * *"
     }
   ]
 }

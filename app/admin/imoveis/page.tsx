@@ -227,6 +227,25 @@ export default function ImoveisPage() {
     setScoringLote(false);
   };
 
+  const handleRodarPipelineRadar = async () => {
+    if (!confirm("Rodar pipeline completo agora?\n\n• Scrape Caixa + LeilãoImóvel\n• Score IA nos novos\n• Enviar ao Radar PB\n\nO gratuito recebe 30min depois via cron.")) return;
+    setSyncingCaixa(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch("/api/cron/pipeline-radar", { method: "POST" });
+      const data = await res.json();
+      setSyncResult({
+        saved: data.enviados ?? 0,
+        skipped: 0,
+        errors: data.log?.filter((l: string) => l.includes("ERROR")) ?? [],
+      });
+      await carregarImoveis();
+    } catch (err) {
+      setSyncResult({ errors: ["Erro pipeline: " + (err instanceof Error ? err.message : "tente novamente")] });
+    }
+    setSyncingCaixa(false);
+  };
+
   const handleScoreIndividual = async (id: string) => {
     try {
       const res = await fetch(`/api/admin/imoveis/${id}/score`, { method: "POST" });
@@ -314,18 +333,30 @@ export default function ImoveisPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" loading={syncingCaixa} onClick={handleSyncCaixa}>
-            🏦 Sincronizar Caixa CEF (PB)
-          </Button>
+          <button
+            onClick={handleRodarPipelineRadar}
+            disabled={syncingCaixa}
+            className="text-xs px-3 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg disabled:opacity-50 transition-colors"
+            title="Scrape + Score IA + Enviar Radar agora (gratuito em 30min)"
+          >
+            {syncingCaixa ? "Rodando..." : "🚀 Rodar pipeline agora"}
+          </button>
           <Button variant="secondary" loading={syncing} onClick={handleSync}>
-            🔄 Sincronizar LeilãoNinja
+            🔄 LeilãoNinja
           </Button>
+          <button
+            onClick={handleSyncCaixa}
+            disabled={syncingCaixa}
+            className="text-xs px-3 py-2 bg-[#0f3460] hover:bg-[#1a4a8a] text-[#a0a0a0] hover:text-white font-medium rounded-lg disabled:opacity-50 transition-colors"
+          >
+            🏦 Só Caixa CEF
+          </button>
           <button
             onClick={handleScoreLote}
             disabled={scoringLote}
             className="text-xs px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg disabled:opacity-50 transition-colors"
           >
-            {scoringLote ? "Analisando..." : "🤖 Score IA (lote)"}
+            {scoringLote ? "Analisando..." : "🤖 Score IA"}
           </button>
         </div>
       </div>

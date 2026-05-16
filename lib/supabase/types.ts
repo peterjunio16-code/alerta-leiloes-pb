@@ -55,6 +55,8 @@ export type Database = {
           fonte: string | null;
           endereco: string | null;
           processo_numero: string | null;
+          enviado_radar_em: string | null;
+          enviado_gratuito_em: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -80,6 +82,8 @@ export type Database = {
           fonte?: string | null;
           endereco?: string | null;
           processo_numero?: string | null;
+          enviado_radar_em?: string | null;
+          enviado_gratuito_em?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -105,6 +109,8 @@ export type Database = {
           fonte?: string | null;
           endereco?: string | null;
           processo_numero?: string | null;
+          enviado_radar_em?: string | null;
+          enviado_gratuito_em?: string | null;
           created_at?: string;
           updated_at?: string;
         };
