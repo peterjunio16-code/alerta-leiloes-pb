@@ -112,10 +112,13 @@ async function rodarGratuito() {
             [suffix]
           );
         } catch {
-          const link = `${APP_URL}/imoveis/${imovel.id}`;
+          // Gratuito recebe teaser — não os mesmos detalhes do Radar
           const radar = `${APP_URL}/radar`;
+          const descontoNum = Number(imovel.desconto ?? 0);
+          const faixaDesconto = descontoNum >= 40 ? "acima de 40%" : descontoNum >= 25 ? "entre 25% e 40%" : "abaixo de 25%";
+          const tipoImovel = imovel.tipo_imovel ?? "Imóvel";
           await sendWhatsAppMessage(numero,
-            `🏠 *Alerta Leilões PB*\n\n📍 *${imovel.titulo}*\n📌 ${cidade}\n💰 Lance a partir de *${lance}*\n📉 Desconto: *${desconto}%*\n📅 Leilão: ${data}\n🔗 ${link}\n\n━━━━━━━━━\nAnálise completa: ${radar}`
+            `🏠 *Novo imóvel encontrado na Paraíba*\n\n${tipoImovel} em ${imovel.cidade} com lance abaixo da avaliação.\n\n📉 Desconto estimado: *${faixaDesconto}*\n⚠️ _Análise informativa. Imóveis de leilão podem ter riscos jurídicos, ocupação ou débitos._\n\n⭐ *Quer ver score, risco, ocupação e análise completa?*\nAssine o Radar PB:\n${radar}`
           );
         }
         notificados++;

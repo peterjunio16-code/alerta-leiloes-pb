@@ -190,6 +190,38 @@ async function rodarPipeline() {
     enviados++;
     log.push(`  ✅ ${notificados} notificados, ${erros} erros`);
 
+    // ── radar_destaque_score_alto ────────────────────────────────────
+    const scoreNum = Number(imovel.score ?? 0);
+    if (scoreNum >= 8) {
+      const link = `${APP_URL}/imoveis/${imovel.id}`;
+      const radar = `${APP_URL}/radar`;
+      const mentoria = `${APP_URL}/mentoria`;
+
+      for (const numero of numerosRadar) {
+        try {
+          if (scoreNum >= 9.5) {
+            // Score excepcional: alerta para você (admin) avaliar 1:1
+            const adminTel = process.env.ADMIN_WHATSAPP ?? numero;
+            await sendWhatsAppMessage(adminTel,
+              `🚨 *ALERTA ADMIN — Score ${scoreNum}/10*\n\n${imovel.titulo}\n📍 ${cidade}\n⚡ Lance: ${lance}\n\n🔗 ${link}\n\n_Avaliar abordagem 1:1 para este lead._`
+            );
+          } else if (scoreNum >= 9) {
+            // Score 9+: CTA Radar + Mentoria
+            await sendWhatsAppMessage(numero,
+              `🌟 *DESTAQUE RADAR PB — Score ${scoreNum}/10*\n\n${imovel.titulo}\n📍 ${cidade}\n⚡ Lance: ${lance} | Desconto: ${desconto}%\n\n🔗 ${link}\n\n🎓 *Quer arrematar com segurança?*\nConheça nossa Mentoria:\n${mentoria}`
+            );
+          } else {
+            // Score 8 a 8.9: CTA Radar para quem ainda não assina
+            await sendWhatsAppMessage(numero,
+              `⭐ *DESTAQUE RADAR PB — Score ${scoreNum}/10*\n\n${imovel.titulo}\n📍 ${cidade}\n⚡ Lance: ${lance} | Desconto: ${desconto}%\n\n🔗 ${link}`
+            );
+          }
+          await new Promise((r) => setTimeout(r, 400));
+        } catch { /* silêncio */ }
+      }
+      log.push(`  🌟 Destaque score ${scoreNum} — alerta adicional enviado`);
+    }
+
     // Pausa entre imóveis
     await new Promise((r) => setTimeout(r, 2000));
   }
