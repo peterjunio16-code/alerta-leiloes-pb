@@ -14,8 +14,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { scrapeCaixaCEF } from "@/lib/scraper/caixa-cef";
-import { scrapeLeilaoImovelPB } from "@/lib/scraper/leilao-imovel-api";
+import { scrapeLeilaoNinja } from "@/lib/scraper/leilao-ninja";
 import { gerarScoreIA } from "@/lib/ai/score";
 import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp/client";
 
@@ -59,28 +58,14 @@ async function rodarPipeline() {
 
   log.push(`[${ts()}] 🚀 Pipeline Radar PB iniciado`);
 
-  // ── 1. Garimpagem ────────────────────────────────────────────────
-  log.push(`[${ts()}] 🔍 Scraping Caixa CEF...`);
-  let scrapeOk = false;
+  // ── 1. Garimpagem via LeilãoNinja (fonte confiável com Playwright) ──
+  log.push(`[${ts()}] 🔍 Scraping LeilãoNinja PB...`);
   try {
-    const caixaResult = await scrapeCaixaCEF(5);
-    log.push(`  Caixa: ${caixaResult.saved} novos, ${caixaResult.skipped} duplicados`);
-    scrapeOk = true;
+    const ninjaResult = await scrapeLeilaoNinja(3); // max 3 páginas no cron
+    log.push(`  LeilãoNinja: ${ninjaResult.saved} novos, ${ninjaResult.skipped} duplicados`);
   } catch (err) {
-    log.push(`  Caixa ERROR: ${err instanceof Error ? err.message : String(err)}`);
-  }
-
-  log.push(`[${ts()}] 🔍 Scraping LeilãoImóvel...`);
-  try {
-    const liResult = await scrapeLeilaoImovelPB(3);
-    log.push(`  LeilãoImóvel: ${liResult.saved} novos, ${liResult.skipped} duplicados`);
-    scrapeOk = true;
-  } catch (err) {
-    log.push(`  LeilãoImóvel ERROR: ${err instanceof Error ? err.message : String(err)}`);
-  }
-
-  if (!scrapeOk) {
-    return NextResponse.json({ ok: false, log }, { status: 500 });
+    log.push(`  LeilãoNinja ERROR: ${err instanceof Error ? err.message : String(err)}`);
+    // Continua mesmo se o scrape falhar — pode haver imóveis pendentes no banco
   }
 
   // ── 2. Score IA nos imóveis novos sem análise ────────────────────

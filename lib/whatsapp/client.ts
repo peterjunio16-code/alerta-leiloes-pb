@@ -49,7 +49,8 @@ export async function sendWhatsAppTemplate(
   to: string,
   templateName: string,
   languageCode: string,
-  bodyParams: string[]
+  bodyParams: string[],
+  urlButtonParams: string[] = []
 ): Promise<void> {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -59,6 +60,22 @@ export async function sendWhatsAppTemplate(
     return;
   }
 
+  const components: Array<Record<string, unknown>> = [];
+  if (bodyParams.length > 0) {
+    components.push({
+      type: "body",
+      parameters: bodyParams.map((text) => ({ type: "text", text })),
+    });
+  }
+  urlButtonParams.forEach((suffix, idx) => {
+    components.push({
+      type: "button",
+      sub_type: "url",
+      index: String(idx),
+      parameters: [{ type: "text", text: suffix }],
+    });
+  });
+
   const normalized = normalizePhone(to);
   await post(phoneNumberId, token, {
     to: normalized,
@@ -66,12 +83,7 @@ export async function sendWhatsAppTemplate(
     template: {
       name: templateName,
       language: { code: languageCode },
-      components: bodyParams.length > 0 ? [
-        {
-          type: "body",
-          parameters: bodyParams.map((text) => ({ type: "text", text })),
-        },
-      ] : [],
+      components,
     },
   });
 }
