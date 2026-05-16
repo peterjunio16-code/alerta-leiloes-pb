@@ -8,19 +8,29 @@ function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 });
 }
 
-function paramsGratuito(imovel: Record<string, unknown>): string[] {
+/**
+ * Retorna o suffix dinâmico para o botão URL do WhatsApp.
+ * O template tem base URL: https://alerta-leiloes-pb.vercel.app/
+ * então o suffix é: imoveis/<id>
+ */
+function imovelSuffix(imovel: Record<string, unknown>): string {
+  return `imoveis/${imovel.id as string}`;
+}
+
+function paramsGratuito(imovel: Record<string, unknown>): { body: string[]; urlSuffix: string } {
   const lance = fmt((imovel.lance_inicial as number) ?? 0);
   const cidade = `${imovel.cidade ?? "PB"}${imovel.bairro ? ` — ${imovel.bairro}` : ""}`;
   const desconto = String(imovel.desconto ?? 0);
   const data = imovel.data_leilao
     ? new Date(imovel.data_leilao as string).toLocaleDateString("pt-BR")
     : "Em breve";
-  const link = (imovel.link as string) ?? `${process.env.NEXT_PUBLIC_APP_URL}/grupo`;
-  const urlRadar = `${process.env.NEXT_PUBLIC_APP_URL}/radar`;
-  return [String(imovel.titulo ?? "Imóvel em leilão"), cidade, lance, desconto, data, link, urlRadar];
+  return {
+    body: [String(imovel.titulo ?? "Imóvel em leilão"), cidade, lance, desconto, data],
+    urlSuffix: imovelSuffix(imovel),
+  };
 }
 
-function paramsRadar(imovel: Record<string, unknown>): string[] {
+function paramsRadar(imovel: Record<string, unknown>): { body: string[]; urlSuffix: string } {
   const lance = fmt((imovel.lance_inicial as number) ?? 0);
   const avaliacao = imovel.valor_avaliacao ? fmt(imovel.valor_avaliacao as number) : "—";
   const cidade = `${imovel.cidade ?? "PB"}${imovel.bairro ? ` — ${imovel.bairro}` : ""}`;
@@ -29,19 +39,24 @@ function paramsRadar(imovel: Record<string, unknown>): string[] {
   const data = imovel.data_leilao
     ? new Date(imovel.data_leilao as string).toLocaleDateString("pt-BR")
     : "Em breve";
-  const link = (imovel.link as string) ?? `${process.env.NEXT_PUBLIC_APP_URL}/radar`;
-  return [String(imovel.titulo ?? "Imóvel em leilão"), cidade, avaliacao, lance, desconto, score, data, link];
+  return {
+    body: [String(imovel.titulo ?? "Imóvel em leilão"), cidade, avaliacao, lance, desconto, score, data],
+    urlSuffix: imovelSuffix(imovel),
+  };
 }
 
 // Fallback em texto livre (funciona apenas dentro da janela de 24h)
 function msgTextoGratuito(imovel: Record<string, unknown>): string {
-  const params = paramsGratuito(imovel);
-  return `🏠 *Alerta Leilões PB*\n\n📍 *${params[0]}*\n📌 ${params[1]}\n💰 Lance a partir de *${params[2]}*\n📉 Desconto: *${params[3]}%*\n📅 Leilão: ${params[4]}\n🔗 ${params[5]}\n\n━━━━━━━━━\nAnálise completa: ${params[6]}`;
+  const p = paramsGratuito(imovel);
+  const link = (imovel.link as string) ?? `${process.env.NEXT_PUBLIC_APP_URL}/grupo`;
+  const radar = `${process.env.NEXT_PUBLIC_APP_URL}/radar`;
+  return `🏠 *Alerta Leilões PB*\n\n📍 *${p.body[0]}*\n📌 ${p.body[1]}\n💰 Lance a partir de *${p.body[2]}*\n📉 Desconto: *${p.body[3]}%*\n📅 Leilão: ${p.body[4]}\n🔗 ${link}\n\n━━━━━━━━━\nAnálise completa: ${radar}`;
 }
 
 function msgTextoRadar(imovel: Record<string, unknown>): string {
-  const params = paramsRadar(imovel);
-  return `🎯 *RADAR PB*\n\n🏘️ *${params[0]}*\n📍 ${params[1]}\n💰 Avaliação: ${params[2]} → Lance: *${params[3]}*\n📉 ${params[4]}% | ⭐ Score: *${params[5]}/10*\n📅 ${params[6]}\n🔗 ${params[7]}`;
+  const p = paramsRadar(imovel);
+  const link = (imovel.link as string) ?? `${process.env.NEXT_PUBLIC_APP_URL}/radar`;
+  return `🎯 *RADAR PB*\n\n🏘️ *${p.body[0]}*\n📍 ${p.body[1]}\n💰 Avaliação: ${p.body[2]} → Lance: *${p.body[3]}*\n📉 ${p.body[4]}% | ⭐ Score: *${p.body[5]}/10*\n📅 ${p.body[6]}\n🔗 ${link}`;
 }
 
 type EnvioResult = {
@@ -92,15 +107,17 @@ async function enviarParaGrupo(
 
     try {
       if (isRadar) {
-        // Tenta template primeiro, fallback para texto
+        const p = paramsRadar(imovel);
         try {
-          await sendWhatsAppTemplate(numero, "alerta_imovel_radar", "pt_BR", paramsRadar(imovel));
+          await sendWhatsAppTemplate(numero, "alerta_imovel_radar", "pt_BR", p.body, [p.urlSuffix]);
         } catch {
           await sendWhatsAppMessage(numero, msgTextoRadar(imovel));
         }
       } else {
+        const p = paramsGratuito(imovel);
         try {
-          await sendWhatsAppTemplate(numero, "alerta_imovel_gratuito", "pt_BR", paramsGratuito(imovel));
+          // Gratuito tem 2 botões: btn 0 dinâmico (imóvel), btn 1 estático (radar) — só o 0 precisa de param
+          await sendWhatsAppTemplate(numero, "alerta_imovel_gratuito", "pt_BR", p.body, [p.urlSuffix]);
         } catch {
           await sendWhatsAppMessage(numero, msgTextoGratuito(imovel));
         }

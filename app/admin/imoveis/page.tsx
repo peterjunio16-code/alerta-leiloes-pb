@@ -27,7 +27,10 @@ export default function ImoveisPage() {
   const [publishingAll, setPublishingAll] = useState(false);
   const [publishAllResult, setPublishAllResult] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ saved?: number; skipped?: number; errors?: string[] } | null>(null);
+  const [syncResult, setSyncResult] = useState<{ saved?: number; skipped?: number; errors?: string[]; total_found?: number } | null>(null);
+  const [syncingCaixa, setSyncingCaixa] = useState(false);
+  const [scoringLote, setScoringLote] = useState(false);
+  const [scoreLoteResult, setScoreLoteResult] = useState<string | null>(null);
   const [grupoSelecionado, setGrupoSelecionado] = useState<Record<string, GrupoDestino>>({});
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [ordenacao, setOrdenacao] = useState<"recentes" | "score">("recentes");
@@ -191,6 +194,54 @@ export default function ImoveisPage() {
     setSyncing(false);
   };
 
+  const handleSyncCaixa = async () => {
+    setSyncingCaixa(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch("/api/admin/scraper/caixa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maxPages: 10 }),
+        signal: AbortSignal.timeout(120000),
+      });
+      const data = await res.json();
+      setSyncResult(data);
+      await carregarImoveis();
+    } catch (err) {
+      setSyncResult({ errors: ["Erro Caixa: " + (err instanceof Error ? err.message : "tente novamente")] });
+    }
+    setSyncingCaixa(false);
+  };
+
+  const handleScoreLote = async () => {
+    setScoringLote(true);
+    setScoreLoteResult(null);
+    try {
+      const res = await fetch("/api/admin/imoveis/batch/score", { method: "PUT" });
+      const data = await res.json();
+      setScoreLoteResult(`🤖 ${data.analisados ?? 0} imóveis analisados pela IA`);
+      await carregarImoveis();
+    } catch (err) {
+      setScoreLoteResult("❌ Erro ao gerar scores: " + (err instanceof Error ? err.message : "tente novamente"));
+    }
+    setScoringLote(false);
+  };
+
+  const handleScoreIndividual = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/imoveis/${id}/score`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setImoveis((prev) => prev.map((i) => i.id === id ? { ...i, score: data.score } : i));
+        alert(`✅ Score gerado: ${data.score}/10\n\n${data.analise?.slice(0, 300) ?? ""}`);
+      } else {
+        alert(`❌ ${data.error}`);
+      }
+    } catch (err) {
+      alert("❌ Erro: " + (err instanceof Error ? err.message : "tente novamente"));
+    }
+  };
+
   const imovelPendentes = imoveis.filter((i) => i.status === "pendente").length;
 
   return (
@@ -262,9 +313,21 @@ export default function ImoveisPage() {
             {imoveis.length} total
           </p>
         </div>
-        <Button variant="secondary" loading={syncing} onClick={handleSync}>
-          🔄 Sincronizar LeilãoNinja (PB)
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" loading={syncingCaixa} onClick={handleSyncCaixa}>
+            🏦 Sincronizar Caixa CEF (PB)
+          </Button>
+          <Button variant="secondary" loading={syncing} onClick={handleSync}>
+            🔄 Sincronizar LeilãoNinja
+          </Button>
+          <button
+            onClick={handleScoreLote}
+            disabled={scoringLote}
+            className="text-xs px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg disabled:opacity-50 transition-colors"
+          >
+            {scoringLote ? "Analisando..." : "🤖 Score IA (lote)"}
+          </button>
+        </div>
       </div>
 
       {/* Publicar em massa */}
@@ -308,6 +371,12 @@ export default function ImoveisPage() {
         </div>
       )}
 
+      {scoreLoteResult && (
+        <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 text-purple-300 text-sm">
+          {scoreLoteResult}
+        </div>
+      )}
+
       {/* Resultado do sync */}
       {syncResult && (
         <div
@@ -321,6 +390,7 @@ export default function ImoveisPage() {
             <p>
               ✅ {syncResult.saved} imóveis novos salvos •{" "}
               {syncResult.skipped} duplicados ignorados
+              {syncResult.total_found !== undefined && ` • ${syncResult.total_found} encontrados na fonte`}
             </p>
           )}
           {syncResult.errors?.map((e, i) => (
@@ -477,7 +547,7 @@ export default function ImoveisPage() {
                       </select>
                     </div>
 
-                    <div className="flex gap-2 items-end pb-0.5">
+                    <div className="flex gap-2 items-end pb-0.5 flex-wrap">
                       {imovel.link && (
                         <a
                           href={imovel.link}
@@ -485,9 +555,25 @@ export default function ImoveisPage() {
                           rel="noopener noreferrer"
                           className="text-xs text-[#a0a0a0] hover:text-white underline"
                         >
-                          Ver no LeilãoNinja
+                          Ver fonte
                         </a>
                       )}
+                      <button
+                        onClick={() => handleScoreIndividual(imovel.id)}
+                        className="text-xs px-2.5 py-1.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 rounded-lg transition-colors"
+                        title="Gerar score com IA"
+                      >
+                        🤖 Score IA
+                      </button>
+                      <a
+                        href={`/imoveis/${imovel.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs px-2.5 py-1.5 bg-[#0f3460] hover:bg-[#1a4a8a] text-[#a0a0a0] hover:text-white rounded-lg transition-colors"
+                        title="Ver página pública"
+                      >
+                        🔗 Pré-visualizar
+                      </a>
                       <Button
                         size="sm"
                         loading={publishing === imovel.id}
