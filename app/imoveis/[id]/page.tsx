@@ -194,16 +194,7 @@ export default async function ImovelPage({ params }: Props) {
 
         {/* CTAs */}
         <div className="grid md:grid-cols-2 gap-4">
-          {imovel.edital_url && (
-            <a
-              href={imovel.edital_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#0f3460] hover:bg-[#1a4a8a] text-white font-semibold py-4 px-6 rounded-xl transition-colors"
-            >
-              🔗 Ver no site do leiloeiro
-            </a>
-          )}
+          {/* Link do leiloeiro enviado exclusivamente para assinantes Radar PB via WhatsApp */}
         </div>
 
         {/* CTA grupo gratuito */}

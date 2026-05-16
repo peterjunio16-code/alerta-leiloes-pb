@@ -161,10 +161,13 @@ async function rodarPipeline() {
             [suffix]
           );
         } catch {
-          // Fallback texto livre
+          // Fallback texto livre — inclui link do leiloeiro (exclusivo Radar)
           const link = `${APP_URL}/imoveis/${imovel.id}`;
+          const leiloeiroLine = imovel.edital_url
+            ? `\n🏛️ Leiloeiro: ${imovel.edital_url}`
+            : "";
           await sendWhatsAppMessage(numero,
-            `🔐 *RADAR PB — EXCLUSIVO*\n\n⭐ Score: ${score}/10\n\n🏠 *${imovel.titulo}*\n📍 ${cidade}\n\n💰 Avaliação: ${avaliacao}\n⚡ Lance mín: ${lance}\n📉 ${desconto}%\n📅 ${data}\n\n🔗 ${link}\n\n_Você recebe antes do grupo gratuito por ser assinante Radar PB_`
+            `🔐 *RADAR PB — EXCLUSIVO*\n\n⭐ Score: ${score}/10\n\n🏠 *${imovel.titulo}*\n📍 ${cidade}\n\n💰 Avaliação: ${avaliacao}\n⚡ Lance mín: ${lance}\n📉 ${desconto}%\n📅 ${data}\n\n🔗 ${link}${leiloeiroLine}\n\n_Você recebe antes do grupo gratuito por ser assinante Radar PB_`
           );
         }
         notificados++;
