@@ -3,6 +3,12 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+// Força renderização dinâmica em cada request — sem cache de página estática.
+// Necessário porque a página depende de searchParams (?ref=radar) e dos dados
+// atualizados do Supabase.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type Props = { params: { id: string }; searchParams?: { ref?: string } };
 
 function fmt(n: number) {
