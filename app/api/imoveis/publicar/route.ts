@@ -65,11 +65,10 @@ function msgTextoGratuito(imovel: Record<string, unknown>): string {
 
 function msgTextoRadar(imovel: Record<string, unknown>): string {
   const p = paramsRadar(imovel);
-  const link = `${APP_URL}/imoveis/${imovel.id as string}`;
-  // Filtra URLs do LeilaoNinja (exigem login — inúteis para o lead)
-  const editalPublico = (imovel.edital_url as string | null);
-  const editalValido = editalPublico && !editalPublico.includes("leilaoninja.com") ? editalPublico : null;
-  const leiloeiroLine = editalValido ? `\n🏛️ Leiloeiro: ${editalValido}` : "";
+  const link = `${APP_URL}/imoveis/${imovel.id as string}?ref=radar`;
+  // Inclui link do leiloeiro/edital para assinantes Radar (acesso completo)
+  const editalUrl = (imovel.edital_url as string | null);
+  const leiloeiroLine = editalUrl ? `\n🏛️ Leiloeiro: ${editalUrl}` : "";
   return `🔐 *RADAR PB — EXCLUSIVO*\n\n⭐ Score: ${p.body[5]}/10\n\n🏠 *${p.body[0]}*\n📍 ${p.body[1]}\n\n💰 Avaliação: ${p.body[2]}\n⚡ Lance mín: ${p.body[3]}\n📉 ${p.body[4]}%\n📅 ${p.body[6]}\n\n🔗 ${link}${leiloeiroLine}\n\n_Você recebe antes do grupo gratuito por ser assinante Radar PB_`;
 }
 

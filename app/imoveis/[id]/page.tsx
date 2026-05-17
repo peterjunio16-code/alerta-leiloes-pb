@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-type Props = { params: { id: string } };
+type Props = { params: { id: string }; searchParams?: { ref?: string } };
 
 function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 });
@@ -40,7 +40,8 @@ function ScoreMeter({ score }: { score: number }) {
   );
 }
 
-export default async function ImovelPage({ params }: Props) {
+export default async function ImovelPage({ params, searchParams }: Props) {
+  const isRadar = searchParams?.ref === "radar";
   const supabase = createServiceClient();
   const { data: imovel, error } = await supabase
     .from("imoveis")
@@ -73,12 +74,18 @@ export default async function ImovelPage({ params }: Props) {
             <span className="text-[#e63946] font-black text-lg">Alerta</span>
             <span className="text-white font-bold text-lg">Leilões PB</span>
           </Link>
-          <Link
-            href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK ?? "#"}
-            className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-semibold transition-colors"
-          >
-            📲 Entrar no grupo grátis
-          </Link>
+          {isRadar ? (
+            <span className="text-xs bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-3 py-1.5 rounded-lg font-semibold">
+              ⭐ Assinante Radar PB
+            </span>
+          ) : (
+            <Link
+              href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK ?? "#"}
+              className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-semibold transition-colors"
+            >
+              📲 Entrar no grupo grátis
+            </Link>
+          )}
         </div>
       </nav>
 
@@ -197,27 +204,42 @@ export default async function ImovelPage({ params }: Props) {
           {/* Link do leiloeiro enviado exclusivamente para assinantes Radar PB via WhatsApp */}
         </div>
 
-        {/* CTA grupo gratuito */}
-        <div className="bg-gradient-to-r from-[#e63946]/20 to-[#0f3460]/40 border border-[#e63946]/30 rounded-xl p-6 text-center">
-          <h2 className="text-white font-bold text-lg mb-2">Receba alertas de leilões antes de todo mundo</h2>
-          <p className="text-[#a0a0a0] text-sm mb-4">
-            Alertas gratuitos via WhatsApp com score de oportunidade, análise de riscos e link direto para o edital.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a
-              href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK ?? "#"}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition-colors"
-            >
-              📲 Entrar no grupo grátis
-            </a>
+        {/* CTA — diferente para Radar vs Gratuito */}
+        {isRadar ? (
+          <div className="bg-gradient-to-r from-yellow-500/10 to-[#0f3460]/40 border border-yellow-500/30 rounded-xl p-6 text-center">
+            <h2 className="text-white font-bold text-lg mb-2">⭐ Você é assinante Radar PB</h2>
+            <p className="text-[#a0a0a0] text-sm mb-4">
+              Você recebe este alerta antes do grupo gratuito com análise completa, score de oportunidade e link direto do leiloeiro.
+            </p>
             <a
               href="/radar"
-              className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-xl transition-colors"
+              className="inline-block bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-xl transition-colors"
             >
-              ⭐ Radar PB (análise completa)
+              ⭐ Ver todos os alertas Radar PB
             </a>
           </div>
-        </div>
+        ) : (
+          <div className="bg-gradient-to-r from-[#e63946]/20 to-[#0f3460]/40 border border-[#e63946]/30 rounded-xl p-6 text-center">
+            <h2 className="text-white font-bold text-lg mb-2">Receba alertas de leilões antes de todo mundo</h2>
+            <p className="text-[#a0a0a0] text-sm mb-4">
+              Alertas gratuitos via WhatsApp com score de oportunidade, análise de riscos e link direto para o edital.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <a
+                href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK ?? "#"}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition-colors"
+              >
+                📲 Entrar no grupo grátis
+              </a>
+              <a
+                href="/radar"
+                className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-xl transition-colors"
+              >
+                ⭐ Radar PB (análise completa)
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* Fonte */}
         <p className="text-[#a0a0a0] text-xs text-center">
