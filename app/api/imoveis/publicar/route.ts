@@ -168,21 +168,38 @@ export async function POST(request: NextRequest) {
 
     const agora = new Date().toISOString();
 
-    // Marca os campos de envio para que os crons não re-enviem o mesmo imóvel
-    // pipeline-gratuito: exige enviado_radar_em != null
-    // pipeline-radar:    exige status = "pendente"
+    // LOCK OTIMISTA — evita duplicata por double-click ou requisições concorrentes.
+    // Se o imóvel já tem enviado_{grupo}_em setado, retorna sem reenviar.
     const update: Record<string, string> = { status: "publicado", grupo_destino: grupo };
-    if (grupo === "radar" || grupo === "ambos") {
-      update.enviado_radar_em = agora;   // bloqueia pipeline-gratuito de re-enviar
-    }
-    if (grupo === "gratuito" || grupo === "ambos") {
-      update.enviado_gratuito_em = agora; // bloqueia re-envio para gratuito
+    let lockQuery = supabase.from("imoveis").update(update).eq("id", imovelId);
+
+    if (grupo === "radar") {
+      update.enviado_radar_em = agora;
+      lockQuery = supabase.from("imoveis").update(update).eq("id", imovelId).is("enviado_radar_em", null);
+    } else if (grupo === "gratuito") {
+      update.enviado_gratuito_em = agora;
+      lockQuery = supabase.from("imoveis").update(update).eq("id", imovelId).is("enviado_gratuito_em", null);
+    } else {
+      // ambos: bloqueia se QUALQUER um dos dois já foi enviado
+      update.enviado_radar_em = agora;
+      update.enviado_gratuito_em = agora;
+      lockQuery = supabase.from("imoveis").update(update).eq("id", imovelId)
+        .is("enviado_radar_em", null)
+        .is("enviado_gratuito_em", null);
     }
 
-    await supabase
-      .from("imoveis")
-      .update(update)
-      .eq("id", imovelId);
+    const { count } = await lockQuery.select("id", { count: "exact", head: true });
+
+    if (!count || count === 0) {
+      return NextResponse.json({
+        success: false,
+        error: "Imóvel já foi publicado para este grupo. Ignorado para evitar duplicata.",
+        notificados: 0,
+        leads_encontrados: 0,
+        erros: [],
+        grupo,
+      }, { status: 409 });
+    }
 
     const resultado = await enviarParaGrupo(supabase, imovel as Record<string, unknown>, grupo);
 
