@@ -128,11 +128,14 @@ async function rodarPipeline() {
     .select("lead_id, leads(whatsapp)")
     .eq("status", "ativo");
 
-  const numerosRadar = (assinantes ?? [])
-    .map((a) => (a.leads as { whatsapp: string } | null)?.whatsapp)
-    .filter(Boolean) as string[];
+  // Deduplica números — evita envio múltiplo se houver linhas duplicadas na tabela
+  const numerosRadar = [...new Set(
+    (assinantes ?? [])
+      .map((a) => (a.leads as { whatsapp: string } | null)?.whatsapp)
+      .filter(Boolean) as string[]
+  )];
 
-  log.push(`  ${numerosRadar.length} assinantes Radar PB ativos`);
+  log.push(`  ${numerosRadar.length} assinantes Radar PB ativos (únicos)`);
 
   // ── 5. Envia para cada imóvel ────────────────────────────────────
   let enviados = 0;

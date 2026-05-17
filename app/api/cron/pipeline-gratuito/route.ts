@@ -80,10 +80,12 @@ async function rodarGratuito() {
     (assinantes ?? []).map((a) => (a.leads as { whatsapp: string } | null)?.whatsapp).filter(Boolean)
   );
 
-  const numerosGratuitos = (leads ?? [])
-    .map((l) => l.whatsapp)
-    .filter(Boolean)
-    .filter((n) => !numerosRadar.has(n)); // exclui quem já recebeu como Radar
+  const numerosGratuitos = [...new Set(
+    (leads ?? [])
+      .map((l) => l.whatsapp)
+      .filter(Boolean)
+      .filter((n) => !numerosRadar.has(n)) // exclui quem já recebeu como Radar
+  )];
 
   log.push(`  ${numerosGratuitos.length} leads gratuitos (excluindo ${numerosRadar.size} já notificados pelo Radar)`);
 
