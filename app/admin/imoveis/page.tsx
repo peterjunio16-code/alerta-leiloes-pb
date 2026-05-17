@@ -23,9 +23,10 @@ type DiagResult = {
 
 export default function ImoveisPage() {
   const [imoveis, setImoveis] = useState<Imovel[]>([]);
+  const [loadingImoveis, setLoadingImoveis] = useState(false);
   const [publishing, setPublishing] = useState<string | null>(null);
   const [publishingAll, setPublishingAll] = useState(false);
-  const [publishAllResult, setPublishAllResult] = useState<string | null>(null);
+  const [publishAllResult, setPublishAllResult] = useState<{ msg: string; tipo: "ok" | "warn" | "erro" } | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ saved?: number; skipped?: number; errors?: string[]; total_found?: number } | null>(null);
   const [syncingCaixa, setSyncingCaixa] = useState(false);
@@ -47,17 +48,24 @@ export default function ImoveisPage() {
     }
   };
 
-  const carregarImoveis = async () => {
-    const params = new URLSearchParams({ status: filtroStatus, order: ordenacao });
-    const res = await fetch(`/api/admin/imoveis?${params}`);
-    if (res.ok) {
-      const data = await res.json();
-      setImoveis(data ?? []);
+  const carregarImoveis = async (statusOverride?: string, ordenacaoOverride?: string) => {
+    setLoadingImoveis(true);
+    try {
+      const s = statusOverride ?? filtroStatus;
+      const o = ordenacaoOverride ?? ordenacao;
+      const params = new URLSearchParams({ status: s, order: o });
+      const res = await fetch(`/api/admin/imoveis?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setImoveis(data ?? []);
+      }
+    } finally {
+      setLoadingImoveis(false);
     }
   };
 
   useEffect(() => {
-    carregarImoveis();
+    carregarImoveis(filtroStatus, ordenacao);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtroStatus, ordenacao]);
 
@@ -115,21 +123,32 @@ export default function ImoveisPage() {
   };
 
   const handlePublicarMelhores = async (grupo: GrupoDestino, quantidade = 3) => {
-    // Pega os N pendentes com maior score
-    const pendentes = imoveis
-      .filter((i) => i.status === "pendente")
+    // Busca frescos do banco para garantir pendentes atualizados
+    let pendentesDb: Imovel[] = [];
+    try {
+      const res = await fetch("/api/admin/imoveis?status=pendente&order=score");
+      if (res.ok) pendentesDb = (await res.json()) ?? [];
+    } catch { /* usa estado local como fallback */ }
+
+    const pendentes = (pendentesDb.length > 0 ? pendentesDb : imoveis.filter((i) => i.status === "pendente"))
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
       .slice(0, quantidade);
 
-    if (!pendentes.length) return alert("Nenhum imóvel pendente.");
+    if (!pendentes.length) {
+      alert("⚠️ Nenhum imóvel pendente encontrado.\n\nUse 'Sincronizar' para importar novos leilões.");
+      return;
+    }
+
     const label = grupo === "gratuito" ? "Grupo Gratuito" : grupo === "radar" ? "Radar PB" : "Ambos os grupos";
-    const nomes = pendentes.map((i) => `• ${i.titulo} (score ${i.score ?? 0})`).join("\n");
-    if (!confirm(`Publicar os ${pendentes.length} melhores imóveis para ${label}?\n\n${nomes}`)) return;
+    const nomes = pendentes.map((i) => `• ${i.titulo.slice(0, 50)} (score ${i.score ?? 0}/10)`).join("\n");
+    if (!confirm(`Publicar os ${pendentes.length} melhores imóveis para ${label}?\n\n${nomes}\n\nIsso enviará WhatsApp para os contatos cadastrados.`)) return;
 
     setPublishingAll(true);
     setPublishAllResult(null);
     let ok = 0; let erro = 0;
     let totalNotificados = 0;
+    let totalLeads = 0;
+
     for (const imovel of pendentes) {
       try {
         const res = await fetch("/api/imoveis/publicar", {
@@ -141,17 +160,36 @@ export default function ImoveisPage() {
         if (res.ok) {
           ok++;
           totalNotificados += data.notificados ?? 0;
+          totalLeads = Math.max(totalLeads, data.leads_encontrados ?? 0);
           setImoveis((prev) => prev.map((i) => i.id === imovel.id ? { ...i, status: "publicado", grupo_destino: grupo } : i));
-          // Pequena pausa entre disparos para não sobrecarregar a API
           await new Promise((r) => setTimeout(r, 1500));
         } else {
           erro++;
           console.error(`Erro ao publicar ${imovel.titulo}:`, data.detalhe ?? data.error);
         }
-      } catch { erro++; }
+      } catch (err) {
+        erro++;
+        console.error("Erro publicar:", err);
+      }
     }
+
+    // Recarrega lista para refletir mudanças de status
+    await carregarImoveis();
     setPublishingAll(false);
-    setPublishAllResult(`✅ ${ok} imóveis publicados para ${label} • 📨 ${totalNotificados} contatos notificados${erro ? ` • ❌ ${erro} erros` : ""}`);
+
+    if (totalLeads === 0) {
+      setPublishAllResult({
+        msg: `⚠️ ${ok} imóvel(is) marcado(s) como publicado, mas NENHUM contato encontrado na base.\n\nCadastre leads em /admin/leads ou aguarde assinaturas para que o envio funcione.`,
+        tipo: "warn",
+      });
+    } else if (erro > 0 && ok === 0) {
+      setPublishAllResult({ msg: `❌ Falha ao publicar — ${erro} erro(s). Verifique os logs.`, tipo: "erro" });
+    } else {
+      setPublishAllResult({
+        msg: `✅ ${ok} imóvel(is) publicado(s) para ${label} · 📨 ${totalNotificados} de ${totalLeads} contatos notificados${erro ? ` · ❌ ${erro} erro(s)` : ""}`,
+        tipo: totalNotificados > 0 ? "ok" : "warn",
+      });
+    }
   };
 
   const handleSync = async () => {
@@ -330,9 +368,18 @@ export default function ImoveisPage() {
               <span className="text-yellow-400 font-medium">{imovelPendentes} pendentes para publicar • </span>
             )}
             {imoveis.length} total
+            {loadingImoveis && <span className="ml-2 text-xs text-[#a0a0a0] animate-pulse">Atualizando...</span>}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => carregarImoveis()}
+            disabled={loadingImoveis}
+            className="text-xs px-3 py-2 bg-[#0f3460] hover:bg-[#1a4a8a] text-[#a0a0a0] hover:text-white font-medium rounded-lg disabled:opacity-50 transition-colors"
+            title="Recarregar lista de imóveis"
+          >
+            {loadingImoveis ? "⏳ Atualizando..." : "🔄 Atualizar lista"}
+          </button>
           <button
             onClick={handleRodarPipelineRadar}
             disabled={syncingCaixa}
@@ -397,8 +444,14 @@ export default function ImoveisPage() {
       )}
 
       {publishAllResult && (
-        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3 text-green-300 text-sm">
-          {publishAllResult}
+        <div className={`rounded-xl p-3 text-sm border whitespace-pre-line ${
+          publishAllResult.tipo === "ok"
+            ? "bg-green-500/10 border-green-500/30 text-green-300"
+            : publishAllResult.tipo === "warn"
+            ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-300"
+            : "bg-red-500/10 border-red-500/30 text-red-300"
+        }`}>
+          {publishAllResult.msg}
         </div>
       )}
 
@@ -481,12 +534,16 @@ export default function ImoveisPage() {
       </div>
 
       {/* Cards de imóveis */}
-      {imoveis.length === 0 ? (
+      {loadingImoveis && imoveis.length === 0 ? (
+        <div className="bg-[#16213e] border border-[#0f3460] rounded-xl p-12 text-center text-[#a0a0a0]">
+          ⏳ Carregando imóveis...
+        </div>
+      ) : imoveis.length === 0 ? (
         <div className="bg-[#16213e] border border-[#0f3460] rounded-xl p-12 text-center text-[#a0a0a0]">
           Nenhum imóvel encontrado. Use &quot;Sincronizar LeilãoNinja&quot; para importar leilões da Paraíba.
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className={`grid gap-4 transition-opacity duration-200 ${loadingImoveis ? "opacity-50 pointer-events-none" : ""}`}>
           {imoveis.map((imovel) => (
             <div
               key={imovel.id}
