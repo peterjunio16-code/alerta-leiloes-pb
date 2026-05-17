@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alerta Leilões PB — Manual do Sistema</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    color: #1a1a2e;
+    background: #fff;
+    line-height: 1.6;
+  }
+
+  /* CAPA */
+  .capa {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+  }
+
+  .capa .logo {
+    font-size: 48px;
+    margin-bottom: 24px;
+  }
+
+  .capa h1 {
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+
+  .capa .gold { color: #c4962a; }
+
+  .capa .subtitulo {
+    font-size: 18px;
+    color: #a0b0c0;
+    margin-bottom: 60px;
+  }
+
+  .capa .socios {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 60px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .capa .socio {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 24px 32px;
+    min-width: 180px;
+  }
+
+  .capa .socio .emoji { font-size: 32px; display: block; margin-bottom: 8px; }
+  .capa .socio .nome { font-weight: 800; font-size: 18px; }
+  .capa .socio .papel { font-size: 12px; color: #a0b0c0; margin-top: 4px; }
+
+  .capa .data {
+    font-size: 13px;
+    color: #607080;
+    margin-top: 40px;
+  }
+
+  /* CONTEÚDO */
+  .page {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 48px 48px;
+  }
+
+  .page-break { page-break-before: always; }
+
+  /* SEÇÕES */
+  .secao {
+    margin-bottom: 48px;
+  }
+
+  .secao-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #0f3460;
+  }
+
+  .secao-numero {
+    background: #0f3460;
+    color: #fff;
+    font-weight: 900;
+    font-size: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .secao-titulo {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1a1a2e;
+  }
+
+  /* PRODUTOS */
+  .produtos {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .produto {
+    border-radius: 12px;
+    padding: 20px;
+    border: 2px solid;
+  }
+
+  .produto.gratuito {
+    background: #f0f9ff;
+    border-color: #3b82f6;
+  }
+
+  .produto.radar {
+    background: #fffbeb;
+    border-color: #c4962a;
+    position: relative;
+  }
+
+  .produto.mentoria {
+    background: #f5f3ff;
+    border-color: #7c3aed;
+  }
+
+  .produto .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .produto.gratuito .badge { background: #3b82f6; color: #fff; }
+  .produto.radar .badge { background: #c4962a; color: #fff; }
+  .produto.mentoria .badge { background: #7c3aed; color: #fff; }
+
+  .produto .preco {
+    font-size: 22px;
+    font-weight: 900;
+    margin: 8px 0 4px;
+  }
+
+  .produto.gratuito .preco { color: #3b82f6; }
+  .produto.radar .preco { color: #c4962a; }
+  .produto.mentoria .preco { color: #7c3aed; }
+
+  .produto .desc { font-size: 12px; color: #666; margin-bottom: 12px; }
+
+  .produto ul { list-style: none; }
+  .produto ul li {
+    font-size: 12px;
+    color: #444;
+    padding: 3px 0;
+    display: flex;
+    gap: 6px;
+  }
+
+  .produto ul li::before { content: "✓"; font-weight: 700; flex-shrink: 0; }
+  .produto.gratuito ul li::before { color: #3b82f6; }
+  .produto.radar ul li::before { color: #c4962a; }
+  .produto.mentoria ul li::before { color: #7c3aed; }
+
+  /* PIPELINE */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pipeline-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .pipeline-hora {
+    background: #1a1a2e;
+    color: #c4962a;
+    font-weight: 800;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 75px;
+    text-align: center;
+  }
+
+  .pipeline-conteudo {
+    flex: 1;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+
+  .pipeline-conteudo h4 {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin-bottom: 6px;
+  }
+
+  .pipeline-conteudo ol {
+    list-style: decimal;
+    padding-left: 16px;
+  }
+
+  .pipeline-conteudo ol li {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 3px;
+  }
+
+  .pipeline-arrow {
+    width: 2px;
+    height: 12px;
+    background: #dee2e6;
+    margin-left: 37px;
+  }
+
+  /* FUNIL */
+  .funil {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .funil-etapa {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .funil-box {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 12px;
+  }
+
+  .funil-box h4 { font-size: 13px; font-weight: 800; margin-bottom: 4px; }
+
+  .funil-box.topo { background: #e0f2fe; border: 2px solid #0284c7; color: #0c4a6e; }
+  .funil-box.meio { background: #dcfce7; border: 2px solid #16a34a; color: #14532d; }
+  .funil-box.conversao { background: #fef9c3; border: 2px solid #c4962a; color: #78350f; }
+  .funil-box.radar-box { background: #fff7ed; border: 2px solid #ea580c; color: #7c2d12; }
+  .funil-box.mentoria-box { background: #f5f3ff; border: 2px solid #7c3aed; color: #3b0764; }
+
+  .funil-seta {
+    font-size: 20px;
+    color: #9ca3af;
+    padding: 4px 0;
+  }
+
+  .funil-responsavel {
+    font-size: 10px;
+    font-weight: 700;
+    background: #1a1a2e;
+    color: #c4962a;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+
+  /* SOCIOS */
+  .socio-card {
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+    border: 2px solid;
+    page-break-inside: avoid;
+  }
+
+  .socio-card.peter { background: #eff6ff; border-color: #3b82f6; }
+  .socio-card.marcelo { background: #f0fdf4; border-color: #16a34a; }
+  .socio-card.domingos { background: #fff7ed; border-color: #ea580c; }
+
+  .socio-card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .socio-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+
+  .peter .socio-avatar { background: #3b82f6; }
+  .marcelo .socio-avatar { background: #16a34a; }
+  .domingos .socio-avatar { background: #ea580c; }
+
+  .socio-nome { font-size: 22px; font-weight: 900; }
+  .socio-papel { font-size: 13px; color: #666; margin-top: 2px; }
+
+  .socio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .socio-bloco h5 {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    margin-bottom: 8px;
+  }
+
+  .socio-bloco ul {
+    list-style: none;
+  }
+
+  .socio-bloco ul li {
+    font-size: 12px;
+    color: #444;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    gap: 8px;
+  }
+
+  .socio-bloco ul li .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .peter .dot { background: #3b82f6; }
+  .marcelo .dot { background: #16a34a; }
+  .domingos .dot { background: #ea580c; }
+
+  .rotina-box {
+    grid-column: 1 / -1;
+    background: rgba(0,0,0,0.04);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .rotina-box h5 {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    margin-bottom: 10px;
+  }
+
+  .rotina-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .rotina-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: #444;
+  }
+
+  .step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 800;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .peter .step-num { background: #3b82f6; }
+  .marcelo .step-num { background: #16a34a; }
+  .domingos .step-num { background: #ea580c; }
+
+  /* SCORE */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .score-card {
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    border: 2px solid;
+  }
+
+  .score-card .emoji { font-size: 24px; display: block; margin-bottom: 6px; }
+  .score-card .faixa { font-size: 18px; font-weight: 900; display: block; }
+  .score-card .label { font-size: 11px; font-weight: 700; margin: 4px 0; display: block; }
+  .score-card .desc { font-size: 11px; color: #666; }
+
+  .score-card.s0 { background: #fef2f2; border-color: #ef4444; }
+  .score-card.s5 { background: #fefce8; border-color: #eab308; }
+  .score-card.s7 { background: #f0fdf4; border-color: #22c55e; }
+  .score-card.s9 { background: #fffbeb; border-color: #c4962a; }
+
+  /* TABELA */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+
+  thead tr {
+    background: #1a1a2e;
+    color: #fff;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  tbody tr:nth-child(even) { background: #f8f9fa; }
+  tbody td { padding: 9px 14px; color: #444; border-bottom: 1px solid #eee; }
+  tbody td:first-child { font-weight: 600; color: #1a1a2e; }
+
+  /* REGRAS */
+  .regras {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .regra {
+    background: #fff8f0;
+    border: 2px solid #f97316;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .regra-num {
+    background: #f97316;
+    color: #fff;
+    font-weight: 900;
+    font-size: 14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .regra-texto { font-size: 12px; color: #7c2d12; line-height: 1.5; }
+  .regra-texto strong { display: block; font-size: 13px; color: #1a1a2e; margin-bottom: 3px; }
+
+  /* PROJEÇÃO */
+  .projecao {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .proj-card {
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    color: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .proj-card .assinantes { font-size: 28px; font-weight: 900; color: #c4962a; }
+  .proj-card .sub { font-size: 11px; color: #a0b0c0; margin-bottom: 8px; }
+  .proj-card .receita { font-size: 15px; font-weight: 700; }
+
+  /* RODAPÉ */
+  .rodape {
+    background: #1a1a2e;
+    color: #607080;
+    text-align: center;
+    padding: 24px;
+    font-size: 11px;
+    margin-top: 48px;
+  }
+
+  /* PRINT */
+  @media print {
+    body { font-size: 12px; }
+    .capa { min-height: 100vh; }
+    .page { padding: 32px 40px; }
+    .page-break { page-break-before: always; }
+    .socio-card { page-break-inside: avoid; }
+    .produtos { page-break-inside: avoid; }
+  }
+
+  /* UTILS */
+  p { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 12px; }
+  .gold-text { color: #c4962a; font-weight: 700; }
+  .tag {
+    display: inline-block;
+    background: #0f3460;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .objecoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .objecao { background: #f8f9fa; border-radius: 8px; padding: 12px; border-left: 3px solid #16a34a; }
+  .objecao .pergunta { font-size: 11px; font-weight: 700; color: #444; margin-bottom: 4px; }
+  .objecao .resposta { font-size: 12px; color: #555; font-style: italic; }
+</style>
+</head>
+<body>
+
+<!-- CAPA -->
+<div class="capa">
+  <div class="logo">🏠</div>
+  <h1>ALERTA LEILÕES <span class="gold">PB</span></h1>
+  <p class="subtitulo">Manual Completo do Sistema — Apresentação para Sócios</p>
+
+  <div class="socios">
+    <div class="socio">
+      <span class="emoji">🎯</span>
+      <div class="nome">Peter</div>
+      <div class="papel">Tráfego & Sistema</div>
+    </div>
+    <div class="socio">
+      <span class="emoji">📞</span>
+      <div class="nome">Marcelo</div>
+      <div class="papel">Atendimento & Negociação</div>
+    </div>
+    <div class="socio">
+      <span class="emoji">🏠</span>
+      <div class="nome">Domingos</div>
+      <div class="papel">Captação & Análise</div>
+    </div>
+  </div>
+
+  <div class="data">Documento gerado em 16 de maio de 2026</div>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="page">
+
+  <!-- 1. O QUE É -->
+  <div class="secao">
+    <div class="secao-header">
+      <div class="secao-numero">1</div>
+      <div class="secao-titulo">O Que É o Alerta Leilões PB</div>
+    </div>
+    <p>
+      É uma <strong>plataforma de inteligência imobiliária</strong> focada em leilões na Paraíba.
+      O sistema busca automaticamente imóveis em leilão, analisa cada um com inteligência artificial,
+      atribui uma nota de oportunidade (score 0–10) e entrega alertas diretamente no WhatsApp dos clientes —
+      sem que nenhum dos sócios precise fazer isso manualmente.
+    </p>
+    <p>
+      <strong>O problema que resolvemos:</strong> Imóveis em leilão podem ter descontos de 30% a 70% sobre
+      o valor de mercado. Porém, a maioria das pessoas não sabe identificar quais são boas oportunidades e
+      quais têm riscos jurídicos escondidos. <span class="gold-text">Nós fazemos essa triagem automaticamente.</span>
+    </p>
+  </div>
+
+  <!-- 2. PRODUTOS -->
+  <div class="secao">
+    <div class="secao-header">
+      <div class="secao-numero">2</div>
+      <div class="secao-titulo">Os Três Produtos</div>
+    </div>
+
+    <div class="produtos">
+      <div class="produto gratuito">
+        <span class="badge">Gratuito</span>
+        <div class="preco">R$ 0</div>
+        <div class="desc">Isca para atrair leads e converter para o Radar</div>
+        <ul>
+          <li>Alertas diários via WhatsApp</li>
+          <li>Tipo do imóvel e cidade</li>
+          <li>Faixa estimada de desconto</li>
+          <li>CTA para assinar o Radar</li>
+        </ul>
+      </div>
+
+      <div class="produto radar">
+        <span class="badge">⭐ Produto Principal</span>
+        <div class="preco">R$ 37,90<span style="font-size:14px;font-weight:400;color:#888">/mês</span></div>
+        <div class="desc">Análise completa 48h antes do grupo gratuito</div>
+        <ul>
+          <li>Score IA de 0 a 10</li>
+          <li>Análise jurídica resumida</li>
+          <li>Ocupação e ônus</li>
+          <li>Link direto do leiloeiro</li>
+          <li>Avaliação × lance mínimo</li>
+          <li>48h de vantagem</li>
+        </ul>
+      </div>
+
+      <div class="produto mentoria">
+        <span class="badge">Premium</span>
+        <div class="preco" style="font-size:16px">Mentoria<br>1:1</div>
+        <div class="desc">Reunião agendada com Marcelo para analisar um imóvel específico</div>
+        <ul>
+          <li>Reunião ~60 min via call</li>
+          <li>Análise do edital completo</li>
+          <li>Estratégia de lance</li>
+          <li>Estimativa de retorno real</li>
+          <li>Não é aula nem curso</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SCORE IA -->
+  <div class="secao">
+    <div class="secao-header">
+      <div class="secao-numero">3</div>
+      <div class="secao-titulo">Score de Inteligência Artificial (0–10)</div>
+    </div>
+    <p>Cada imóvel captado é analisado pelo modelo de IA <strong>Claude (Anthropic)</strong>. A nota define o que o cliente recebe e como Domingos prioriza a revisão.</p>
+
+    <div class="score-grid">
+      <div class="score-card s0">
+        <span class="emoji">🔴</span>
+        <span class="faixa">0 – 4</span>
+        <span class="label">Pular</span>
+        <span class="desc">Desconto baixo, risco elevado ou dados insuficientes</span>
+      </div>
+      <div class="score-card s5">
+        <span class="emoji">🟡</span>
+        <span class="faixa">5 – 6</span>
+        <span class="label">Moderado</span>
+        <span class="desc">Avalie só se conhecer bem a região</span>
+      </div>
+      <div class="score-card s7">
+        <span class="emoji">🟢</span>
+        <span class="faixa">7 – 8</span>
+        <span class="label">Bom</span>
+        <span class="desc">Bom desconto + risco controlado. Vale aprofundar.</span>
+      </div>
+      <div class="score-card s9">
+        <span class="emoji">⭐</span>
+        <span class="faixa">9 – 10</span>
+        <span class="label">Excepcional</span>
+        <span class="desc">Desocupado, sem ônus, desconto acima de 40%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. PIPELINE -->
+  <div class="secao page-break">
+    <div class="secao-header">
+      <div class="secao-numero">4</div>
+      <div class="secao-titulo">Pipeline Diário — 100% Automático</div>
+    </div>
+    <p>Todo dia, sem intervenção manual, o sistema executa 4 rotinas em sequência:</p>
+
+    <div class="pipeline">
+      <div class="pipeline-item">
+        <div class="pipeline-hora">07:00<br>Radar PB</div>
+        <div class="pipeline-conteudo">
+          <h4>Pipeline Radar — Assinantes pagos recebem primeiro</h4>
+          <ol>
+            <li>Acessa o LeilãoNinja e salva imóveis novos da Paraíba</li>
+            <li>Visita cada imóvel e captura o link real do leiloeiro (Cravo, Zuk, etc.)</li>
+            <li>Envia cada imóvel para o Claude que gera score 0–10 e análise jurídica</li>
+            <li>Filtra somente imóveis com score ≥ 5 que ainda não foram enviados</li>
+            <li>Envia alerta completo para todos os assinantes Radar ativos (um a um)</li>
+            <li>Se score ≥ 9: envia alerta especial ao admin para abordagem 1:1</li>
+            <li>Registra data e hora do envio no banco para não duplicar</li>
+          </ol>
+        </div>
+      </div>
+      <div class="pipeline-arrow"></div>
+
+      <div class="pipeline-item">
+        <div class="pipeline-hora">07:30<br>Gratuito</div>
+        <div class="pipeline-conteudo">
+          <h4>Pipeline Gratuito — Leads gratuitos recebem o teaser</h4>
+          <ol>
+            <li>Busca imóveis que o Radar já recebeu mas o gratuito ainda não</li>
+            <li>Monta mensagem teaser: tipo, cidade e faixa de desconto (sem score)</li>
+            <li>Envia para todos os leads gratuitos ativos (excluindo assinantes Radar)</li>
+            <li>Inclui sempre o CTA: "Quer análise completa? Assine o Radar PB"</li>
+          </ol>
+        </div>
+      </div>
+      <div class="pipeline-arrow"></div>
+
+      <div class="pipeline-item">
+        <div class="pipeline-hora">08:00<br>Nutrição</div>
+        <div class="pipeline-conteudo">
+          <h4>Régua de Nutrição — Mensagens automáticas de engajamento</h4>
+          <ol>
+            <li><strong>Gratuito D+1:</strong> "Notou que só mandamos cidade e faixa de desconto? É proposital."</li>
+            <li><strong>Gratuito D+3:</strong> Comparação lado a lado: gratuito ❌ vs Radar ✅ com caso real</li>
+            <li><strong>Gratuito D+7:</strong> Case real — "Apartamento 50% desconto, hoje vale +R$60k"</li>
+            <li><strong>Gratuito D+14:</strong> "14 dias de alertas. Chegou a hora de decidir."</li>
+            <li><strong>Radar D+1:</strong> Como ler o score — o que cada faixa significa</li>
+            <li><strong>Radar D+3:</strong> 5 pontos para verificar antes de licitar</li>
+            <li><strong>Radar D+7:</strong> Do lance à imissão — processo completo</li>
+            <li><strong>Radar D+30:</strong> "Você já arrematou? Quer analisar um imóvel comigo?"</li>
+          </ol>
+        </div>
+      </div>
+      <div class="pipeline-arrow"></div>
+
+      <div class="pipeline-item">
+        <div class="pipeline-hora">09:00<br>Scoring</div>
+        <div class="pipeline-conteudo">
+          <h4>Score Mentoria — Pontua engajamento de cada lead (0–100)</h4>
+          <ol>
+            <li>+10 pts: Tem nome cadastrado</li>
+            <li>+15/+10/+10 pts: Ativo há 7, 14 e 30 dias respectivamente</li>
+            <li>+15 pts: Completou toda a régua gratuita (4/4 mensagens entregues)</li>
+            <li>+30 pts: É assinante Radar ativo (já converteu)</li>
+            <li>+10 pts: Preencheu candidatura para Mentoria</li>
+            <li>Resultado visível em /admin/leads ordenado por score</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. JORNADA -->
+  <div class="secao page-break">
+    <div class="secao-header">
+      <div class="secao-numero">5</div>
+      <div class="secao-titulo">Jornada Completa do Cliente</div>
+    </div>
+
+    <div class="funil">
+      <div class="funil-etapa">
+        <div class="funil-box topo">
+          <h4>👆 TOPO — Atração</h4>
+          Pessoa vê anúncio no Instagram/Facebook → acessa o site ou manda "oi" no WhatsApp
+        </div>
+        <div class="funil-responsavel">🎯 Peter faz os anúncios</div>
+      </div>
+      <div class="funil-seta">↓</div>
+
+      <div class="funil-etapa">
+        <div class="funil-box topo" style="background:#e0f2fe;border-color:#0284c7">
+          <h4>🤖 SISTEMA AUTOMÁTICO — Cadastro</h4>
+          Sistema registra o lead · envia boas-vindas · cria régua D+1/3/7/14
+        </div>
+        <div class="funil-responsavel">🤖 100% automático</div>
+      </div>
+      <div class="funil-seta">↓</div>
+
+      <div class="funil-etapa">
+        <div class="funil-box meio">
+          <h4>📱 MEIO — Nutrição (14 dias automáticos)</h4>
+          Recebe alertas diários de imóveis · Recebe 4 mensagens da régua que mostram o valor do Radar
+        </div>
+        <div class="funil-responsavel">🤖 100% automático</div>
+      </div>
+      <div class="funil-seta">↓</div>
+
+      <div class="funil-etapa">
+        <div class="funil-box conversao">
+          <h4>💳 CONVERSÃO — Assina Radar PB (R$37,90/mês)</h4>
+          Acessa /radar · paga via Kiwify (cartão ou PIX) · Kiwify notifica o sistema automaticamente
+        </div>
+        <div class="funil-responsavel">🤖 Automático + 📞 Marcelo aborda score 45+</div>
+      </div>
+      <div class="funil-seta">↓</div>
+
+      <div class="funil-etapa">
+        <div class="funil-box radar-box">
+          <h4>🎯 ENGAJAMENTO RADAR — Onboarding (30 dias)</h4>
+          Recebe análises completas diárias · Régua D+1/3/7/30 ensina a usar o sistema · D+30 CTA Mentoria
+        </div>
+        <div class="funil-responsavel">🤖 100% automático</div>
+      </div>
+      <div class="funil-seta">↓</div>
+
+      <div class="funil-etapa">
+        <div class="funil-box mentoria-box">
+          <h4>🏆 MENTORIA LANCE CERTO — Produto Premium</h4>
+          Lead com score 70+ é abordado pelo Marcelo · Candidatura preenchida · Reunião 1:1 agendada
+        </div>
+        <div class="funil-responsavel">📞 Marcelo fecha e conduz</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. PAPÉIS -->
+  <div class="secao page-break">
+    <div class="secao-header">
+      <div class="secao-numero">6</div>
+      <div class="secao-titulo">Papel de Cada Sócio</div>
+    </div>
+
+    <!-- PETER -->
+    <div class="socio-card peter">
+      <div class="socio-card-header">
+        <div class="socio-avatar">🎯</div>
+        <div>
+          <div class="socio-nome">Peter</div>
+          <div class="socio-papel">Tráfego Pago & Sistema Técnico</div>
+        </div>
+      </div>
+
+      <div class="socio-grid">
+        <div class="socio-bloco">
+          <h5>Responsabilidades</h5>
+          <ul>
+            <li><span class="dot"></span>Criar e otimizar campanhas Meta Ads</li>
+            <li><span class="dot"></span>Monitorar custo por lead (meta: ≤ R$5)</li>
+            <li><span class="dot"></span>Garantir que os 4 crons rodam todo dia</li>
+            <li><span class="dot"></span>Resolver erros técnicos do sistema</li>
+            <li><span class="dot"></span>Fazer deploy de melhorias</li>
+            <li><span class="dot"></span>Manter integrações (WhatsApp, Kiwify)</li>
+          </ul>
+        </div>
+
+        <div class="socio-bloco">
+          <h5>Painel Admin — Onde Olhar</h5>
+          <ul>
+            <li><span class="dot"></span>/admin → Dashboard geral</li>
+            <li><span class="dot"></span>/admin/leads → Leads novos por dia</li>
+            <li><span class="dot"></span>/admin/imoveis → Imóveis captados</li>
+            <li><span class="dot"></span>/admin/templates → Status WhatsApp</li>
+            <li><span class="dot"></span>Vercel → Cron Jobs (pipelines)</li>
+          </ul>
+        </div>
+
+        <div class="rotina-box">
+          <h5>⏰ Rotina Diária — 10 minutos</h5>
+          <div class="rotina-steps">
+            <div class="rotina-step peter">
+              <span class="step-num peter">1</span>
+              Verificar se pipeline-radar rodou às 07:00 ✓
+            </div>
+            <div class="rotina-step peter">
+              <span class="step-num peter">2</span>
+              Verificar se pipeline-gratuito rodou às 07:30 ✓
+            </div>
+            <div class="rotina-step peter">
+              <span class="step-num peter">3</span>
+              Checar quantos imóveis novos foram captados hoje
+            </div>
+            <div class="rotina-step peter">
+              <span class="step-num peter">4</span>
+              Ver custo por lead e cliques nos anúncios do Meta
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARCELO -->
+    <div class="socio-card marcelo">
+      <div class="socio-card-header">
+        <div class="socio-avatar">📞</div>
+        <div>
+          <div class="socio-nome">Marcelo</div>
+          <div class="socio-papel">Atendimento, Vendas & Mentoria</div>
+        </div>
+      </div>
+
+      <div class="socio-grid">
+        <div class="socio-bloco">
+          <h5>Responsabilidades</h5>
+          <ul>
+            <li><span class="dot"></span>Responder WhatsApp em até 2h (dias úteis)</li>
+            <li><span class="dot"></span>Abordar leads quentes (score 70+) diariamente</li>
+            <li><span class="dot"></span>Enviar CTA Radar para leads score 45–69</li>
+            <li><span class="dot"></span>Analisar e responder candidaturas Mentoria</li>
+            <li><span class="dot"></span>Agendar e conduzir reuniões 1:1</li>
+            <li><span class="dot"></span>Pós-reunião: enviar próximos passos</li>
+          </ul>
+        </div>
+
+        <div class="socio-bloco">
+          <h5>Painel Admin — Onde Olhar</h5>
+          <ul>
+            <li><span class="dot"></span>/admin/leads → Filtro "🔥 Candidatos Mentoria"</li>
+            <li><span class="dot"></span>/admin/aplicacoes → Candidaturas pendentes</li>
+            <li><span class="dot"></span>/admin/assinantes → Radar ativos</li>
+            <li><span class="dot"></span>WhatsApp +55 83 98666-5448</li>
+          </ul>
+        </div>
+
+        <div class="rotina-box">
+          <h5>⏰ Rotina Diária — 30 minutos</h5>
+          <div class="rotina-steps">
+            <div class="rotina-step marcelo">
+              <span class="step-num marcelo">1</span>
+              Abrir /admin/leads → filtro "🔥 Candidatos Mentoria" → ver score 70+
+            </div>
+            <div class="rotina-step marcelo">
+              <span class="step-num marcelo">2</span>
+              Abordar os 3 primeiros da lista pelo WhatsApp (script abaixo)
+            </div>
+            <div class="rotina-step marcelo">
+              <span class="step-num marcelo">3</span>
+              Responder todas as mensagens pendentes no WhatsApp
+            </div>
+            <div class="rotina-step marcelo">
+              <span class="step-num marcelo">4</span>
+              Verificar candidaturas novas em /admin/aplicacoes
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <h5 style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:10px;">Script de Abordagem (Score 70+)</h5>
+        <div style="background:rgba(22,163,74,0.08);border:1px solid #16a34a;border-radius:8px;padding:14px;font-size:12px;color:#14532d;font-style:italic;line-height:1.7">
+          "Olá [nome], aqui é o Marcelo do Alerta Leilões PB. Você acompanha nossos alertas há [X dias] e está entre os perfis mais engajados. Temos um imóvel com score [X]/10 em [cidade] que pode ser interessante. Você teria 20 minutos para conversar esta semana sobre como arrematá-lo com segurança?"
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <h5 style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:10px;">Respostas para Objeções Comuns</h5>
+        <div class="objecoes">
+          <div class="objecao">
+            <div class="pergunta">💬 "R$37,90 é muito caro"</div>
+            <div class="resposta">"São R$1,26/dia. Se você perder um imóvel com 40% de desconto por falta de informação, quanto custou esse erro?"</div>
+          </div>
+          <div class="objecao">
+            <div class="pergunta">💬 "Não sei como funciona leilão"</div>
+            <div class="resposta">"Exatamente por isso o Radar existe. No D+7 você recebe o passo a passo completo — do lance até a imissão na posse."</div>
+          </div>
+          <div class="objecao">
+            <div class="pergunta">💬 "Tenho medo de risco jurídico"</div>
+            <div class="resposta">"Cada alerta já traz a análise jurídica resumida: ocupado ou não, quais ônus tem, quais débitos. Você vê o risco antes de decidir."</div>
+          </div>
+          <div class="objecao">
+            <div class="pergunta">💬 "Vou pensar"</div>
+            <div class="resposta">"Claro. Mas leilão tem data — quando você decidir, o imóvel pode já ter sido arrematado por outra pessoa."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOMINGOS -->
+    <div class="socio-card domingos">
+      <div class="socio-card-header">
+        <div class="socio-avatar">🏠</div>
+        <div>
+          <div class="socio-nome">Domingos</div>
+          <div class="socio-papel">Captação, Análise & Divulgação de Imóveis</div>
+        </div>
+      </div>
+
+      <div class="socio-grid">
+        <div class="socio-bloco">
+          <h5>Responsabilidades</h5>
+          <ul>
+            <li><span class="dot"></span>Revisar imóveis captados pela IA antes das 07:00</li>
+            <li><span class="dot"></span>Corrigir dados errados (ocupação, ônus, tipo)</li>
+            <li><span class="dot"></span>Ajustar scores quando a IA erra</li>
+            <li><span class="dot"></span>Cadastrar imóveis excelentes encontrados fora do sistema</li>
+            <li><span class="dot"></span>Identificar melhores imóveis para criativos de anúncios</li>
+            <li><span class="dot"></span>Garantir qualidade antes do envio automático</li>
+          </ul>
+        </div>
+
+        <div class="socio-bloco">
+          <h5>Painel Admin — Onde Olhar</h5>
+          <ul>
+            <li><span class="dot"></span>/admin/imoveis → Filtro "pendente"</li>
+            <li><span class="dot"></span>Botão "Gerar Score IA" → nova análise</li>
+            <li><span class="dot"></span>Editar imóvel → corrigir campos errados</li>
+            <li><span class="dot"></span>Adicionar imóvel → cadastrar manualmente</li>
+          </ul>
+        </div>
+
+        <div class="rotina-box">
+          <h5>⏰ Rotina Diária — ANTES DAS 07:00 — 20 minutos</h5>
+          <div class="rotina-steps">
+            <div class="rotina-step domingos">
+              <span class="step-num domingos">1</span>
+              Abrir /admin/imoveis → filtrar por status "pendente"
+            </div>
+            <div class="rotina-step domingos">
+              <span class="step-num domingos">2</span>
+              Verificar imóveis com score ≥ 7 — esses vão para o Radar hoje
+            </div>
+            <div class="rotina-step domingos">
+              <span class="step-num domingos">3</span>
+              Confirmar ocupação, link do leiloeiro e data do leilão
+            </div>
+            <div class="rotina-step domingos">
+              <span class="step-num domingos">4</span>
+              Corrigir o que estiver errado → pipeline envia automaticamente às 07:00
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <h5 style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:10px;">Critérios para um Bom Imóvel</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:rgba(234,88,12,0.07);border:1px solid #ea580c;border-radius:8px;padding:10px;font-size:12px">✅ Desconto ≥ 30% sobre avaliação</div>
+          <div style="background:rgba(234,88,12,0.07);border:1px solid #ea580c;border-radius:8px;padding:10px;font-size:12px">✅ Imóvel desocupado ou em desocupação</div>
+          <div style="background:rgba(234,88,12,0.07);border:1px solid #ea580c;border-radius:8px;padding:10px;font-size:12px">✅ Sem ônus além de IPTU</div>
+          <div style="background:rgba(234,88,12,0.07);border:1px solid #ea580c;border-radius:8px;padding:10px;font-size:12px">✅ Leiloeiro confiável (Cravo, Zuk, Sold)</div>
+          <div style="background:rgba(234,88,12,0.07);border:1px solid #ea580c;border-radius:8px;padding:10px;font-size:12px">✅ Leilão em 5 a 30 dias</div>
+          <div style="background:rgba(234,88,12,0.07);border:1px solid #ea580c;border-radius:8px;padding:10px;font-size:12px">✅ Município da PB com boa liquidez</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. PROJEÇÃO -->
+  <div class="secao page-break">
+    <div class="secao-header">
+      <div class="secao-numero">7</div>
+      <div class="secao-titulo">Projeção de Receita</div>
+    </div>
+    <p>Receita recorrente apenas com o Radar PB (Mentoria é adicional):</p>
+
+    <div class="projecao">
+      <div class="proj-card">
+        <div class="assinantes">50</div>
+        <div class="sub">assinantes Radar</div>
+        <div class="receita">R$ 1.895/mês</div>
+      </div>
+      <div class="proj-card">
+        <div class="assinantes">100</div>
+        <div class="sub">assinantes Radar</div>
+        <div class="receita">R$ 3.790/mês</div>
+      </div>
+      <div class="proj-card">
+        <div class="assinantes">200</div>
+        <div class="sub">assinantes Radar</div>
+        <div class="receita">R$ 7.580/mês</div>
+      </div>
+      <div class="proj-card">
+        <div class="assinantes">500</div>
+        <div class="sub">assinantes Radar</div>
+        <div class="receita">R$ 18.950/mês</div>
+      </div>
+    </div>
+
+    <p style="margin-top:16px;font-size:12px;color:#888">
+      Meta inicial: 50 assinantes · Custo estimado de tráfego: R$500–R$1.000/mês · Meta Ads com público segmentado para investidores imobiliários na PB.
+    </p>
+  </div>
+
+  <!-- 8. MÉTRICAS -->
+  <div class="secao">
+    <div class="secao-header">
+      <div class="secao-numero">8</div>
+      <div class="secao-titulo">Métricas para Monitorar Toda Semana</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Métrica</th>
+          <th>Meta</th>
+          <th>Onde Ver</th>
+          <th>Responsável</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Leads novos / semana</td><td>≥ 20</td><td>Meta Ads + /admin/leads</td><td>🎯 Peter</td></tr>
+        <tr><td>Custo por lead</td><td>≤ R$ 5,00</td><td>Meta Ads Manager</td><td>🎯 Peter</td></tr>
+        <tr><td>Imóveis captados / semana</td><td>≥ 10</td><td>/admin/imoveis</td><td>🏠 Domingos</td></tr>
+        <tr><td>Imóveis com score ≥ 7</td><td>≥ 2 / semana</td><td>/admin/imoveis</td><td>🏠 Domingos</td></tr>
+        <tr><td>Taxa conversão gratuito → Radar</td><td>≥ 5%</td><td>/admin/assinantes</td><td>📞 Marcelo</td></tr>
+        <tr><td>Assinantes Radar ativos</td><td>Crescendo</td><td>/admin/assinantes</td><td>📞 Marcelo</td></tr>
+        <tr><td>Candidaturas Mentoria / mês</td><td>≥ 3</td><td>/admin/aplicacoes</td><td>📞 Marcelo</td></tr>
+        <tr><td>Reuniões Mentoria realizadas</td><td>≥ 1 / mês</td><td>Agenda do Marcelo</td><td>📞 Marcelo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 9. REGRAS -->
+  <div class="secao">
+    <div class="secao-header">
+      <div class="secao-numero">9</div>
+      <div class="secao-titulo">Regras de Ouro — Não Negociáveis</div>
+    </div>
+
+    <div class="regras">
+      <div class="regra">
+        <div class="regra-num">1</div>
+        <div class="regra-texto">
+          <strong>Peter não responde WhatsApp de leads</strong>
+          O sistema responde automaticamente. Atendimento humano é exclusivo do Marcelo.
+        </div>
+      </div>
+      <div class="regra">
+        <div class="regra-num">2</div>
+        <div class="regra-texto">
+          <strong>Marcelo não altera código ou pipelines</strong>
+          Qualquer problema técnico: chamar o Peter. Nunca mexer no sistema diretamente.
+        </div>
+      </div>
+      <div class="regra">
+        <div class="regra-num">3</div>
+        <div class="regra-texto">
+          <strong>Domingos revisa antes das 07:00</strong>
+          O pipeline é automático. Se não revisar, imóveis com dados errados são enviados.
+        </div>
+      </div>
+      <div class="regra">
+        <div class="regra-num">4</div>
+        <div class="regra-texto">
+          <strong>Nunca enviar imóvel sem score da IA</strong>
+          O score é o principal diferencial do produto. Sem análise = não enviar.
+        </div>
+      </div>
+      <div class="regra">
+        <div class="regra-num">5</div>
+        <div class="regra-texto">
+          <strong>Gratuito nunca recebe análise completa</strong>
+          Score, análise jurídica e link do leiloeiro são exclusivos do Radar. Protege o valor da assinatura.
+        </div>
+      </div>
+      <div class="regra">
+        <div class="regra-num">6</div>
+        <div class="regra-texto">
+          <strong>Mentoria só via candidatura</strong>
+          Marcelo não fecha Mentoria sem a pessoa preencher o formulário. Serve para qualificar.
+        </div>
+      </div>
+      <div class="regra">
+        <div class="regra-num">7</div>
+        <div class="regra-texto">
+          <strong>Nunca prometer ganho ou garantia</strong>
+          Todo alerta inclui: "Análise informativa. Não substitui advogado ou avaliação individual do edital."
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- RODAPÉ -->
+<div class="rodape">
+  Alerta Leilões PB · alerta-leiloes-pb.vercel.app · Documento gerado em 16 de maio de 2026<br>
+  Peter · Marcelo · Domingos
+</div>
+
+</body>
+</html>
