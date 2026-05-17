@@ -199,24 +199,46 @@ export default async function ImovelPage({ params, searchParams }: Props) {
           </div>
         )}
 
-        {/* CTAs */}
-        <div className="grid md:grid-cols-2 gap-4">
-          {/* Link do leiloeiro enviado exclusivamente para assinantes Radar PB via WhatsApp */}
-        </div>
+        {/* Link oficial do leiloeiro — exclusivo para assinantes Radar */}
+        {isRadar && imovel.edital_url && (
+          <div className="bg-[#16213e] border border-yellow-500/30 rounded-xl p-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-yellow-400 text-xs font-semibold uppercase tracking-wider mb-1">🏛️ Link oficial do leiloeiro</p>
+              <p className="text-[#a0a0a0] text-xs">Acesso exclusivo para assinantes Radar PB</p>
+            </div>
+            <a
+              href={imovel.edital_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-sm py-2 px-5 rounded-lg transition-colors"
+            >
+              Ver leilão →
+            </a>
+          </div>
+        )}
 
         {/* CTA — diferente para Radar vs Gratuito */}
         {isRadar ? (
           <div className="bg-gradient-to-r from-yellow-500/10 to-[#0f3460]/40 border border-yellow-500/30 rounded-xl p-6 text-center">
-            <h2 className="text-white font-bold text-lg mb-2">⭐ Você é assinante Radar PB</h2>
-            <p className="text-[#a0a0a0] text-sm mb-4">
-              Você recebe este alerta antes do grupo gratuito com análise completa, score de oportunidade e link direto do leiloeiro.
+            <p className="text-yellow-400 text-xs font-semibold uppercase tracking-wider mb-2">⭐ Assinante Radar PB</p>
+            <h2 className="text-white font-bold text-lg mb-2">Quer arrematar com segurança?</h2>
+            <p className="text-[#a0a0a0] text-sm mb-5">
+              Nossa mentoria acompanha você do edital até o arrematamento — análise jurídica, estratégia de lance e suporte completo.
             </p>
-            <a
-              href="/radar"
-              className="inline-block bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-xl transition-colors"
-            >
-              ⭐ Ver todos os alertas Radar PB
-            </a>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <a
+                href="/mentoria"
+                className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-xl transition-colors"
+              >
+                🎓 Conhecer a Mentoria
+              </a>
+              <a
+                href="/radar"
+                className="bg-[#0f3460] hover:bg-[#1a4a8a] text-white font-bold py-3 px-8 rounded-xl transition-colors border border-yellow-500/30"
+              >
+                ⭐ Ver mais alertas Radar
+              </a>
+            </div>
           </div>
         ) : (
           <div className="bg-gradient-to-r from-[#e63946]/20 to-[#0f3460]/40 border border-[#e63946]/30 rounded-xl p-6 text-center">
