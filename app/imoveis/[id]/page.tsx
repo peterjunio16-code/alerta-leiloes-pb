@@ -90,6 +90,11 @@ export default async function ImovelPage({ params, searchParams }: Props) {
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        {/* DEPLOY MARKER v7 — se você vê esse banner amarelo, o deploy novo chegou */}
+        <div className="bg-yellow-500 text-black text-center font-bold py-2 px-4 rounded-lg text-sm">
+          🚧 DEPLOY v7 ATIVO — {new Date().toISOString().slice(0, 10)}
+        </div>
+
         {/* Breadcrumb */}
         <p className="text-[#a0a0a0] text-sm">
           <Link href="/" className="hover:text-white">Início</Link>
