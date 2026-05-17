@@ -239,10 +239,12 @@ export default async function ImovelPage({ params, searchParams }: Props) {
                 🎓 Conhecer a Mentoria
               </a>
               <a
-                href="/radar"
-                className="bg-[#0f3460] hover:bg-[#1a4a8a] text-white font-bold py-3 px-8 rounded-xl transition-colors border border-yellow-500/30"
+                href="https://wa.me/558386665448?text=Ol%C3%A1!%20Sou%20assinante%20Radar%20PB%20e%20gostaria%20de%20tirar%20uma%20d%C3%BAvida%20sobre%20este%20im%C3%B3vel."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition-colors"
               >
-                ⭐ Ver mais alertas Radar
+                💬 Falar com o time
               </a>
             </div>
           </div>
