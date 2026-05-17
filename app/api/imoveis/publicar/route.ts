@@ -168,29 +168,19 @@ export async function POST(request: NextRequest) {
 
     const agora = new Date().toISOString();
 
-    // LOCK OTIMISTA — evita duplicata por double-click ou requisições concorrentes.
-    // Se o imóvel já tem enviado_{grupo}_em setado, retorna sem reenviar.
-    const update: Record<string, string> = { status: "publicado", grupo_destino: grupo };
-    let lockQuery = supabase.from("imoveis").update(update).eq("id", imovelId);
+    // LOCK EXPLÍCITO — checa primeiro o estado atual do imóvel, depois atualiza.
+    // (Versão anterior usava .update().is(null) que se comportou de forma errada com Supabase)
+    const imovelData = imovel as { enviado_radar_em: string | null; enviado_gratuito_em: string | null };
 
-    if (grupo === "radar") {
-      update.enviado_radar_em = agora;
-      lockQuery = supabase.from("imoveis").update(update).eq("id", imovelId).is("enviado_radar_em", null);
-    } else if (grupo === "gratuito") {
-      update.enviado_gratuito_em = agora;
-      lockQuery = supabase.from("imoveis").update(update).eq("id", imovelId).is("enviado_gratuito_em", null);
-    } else {
-      // ambos: bloqueia se QUALQUER um dos dois já foi enviado
-      update.enviado_radar_em = agora;
-      update.enviado_gratuito_em = agora;
-      lockQuery = supabase.from("imoveis").update(update).eq("id", imovelId)
-        .is("enviado_radar_em", null)
-        .is("enviado_gratuito_em", null);
-    }
+    const radarJaEnviado = !!imovelData.enviado_radar_em;
+    const gratuitoJaEnviado = !!imovelData.enviado_gratuito_em;
 
-    const { count } = await lockQuery.select("id", { count: "exact", head: true });
+    let bloqueado = false;
+    if (grupo === "radar" && radarJaEnviado) bloqueado = true;
+    if (grupo === "gratuito" && gratuitoJaEnviado) bloqueado = true;
+    if (grupo === "ambos" && (radarJaEnviado || gratuitoJaEnviado)) bloqueado = true;
 
-    if (!count || count === 0) {
+    if (bloqueado) {
       return NextResponse.json({
         success: false,
         error: "Imóvel já foi publicado para este grupo. Ignorado para evitar duplicata.",
@@ -199,6 +189,25 @@ export async function POST(request: NextRequest) {
         erros: [],
         grupo,
       }, { status: 409 });
+    }
+
+    // Constrói o update e aplica
+    const update: Record<string, string> = { status: "publicado", grupo_destino: grupo };
+    if (grupo === "radar" || grupo === "ambos") update.enviado_radar_em = agora;
+    if (grupo === "gratuito" || grupo === "ambos") update.enviado_gratuito_em = agora;
+
+    const { error: updateError } = await supabase
+      .from("imoveis")
+      .update(update)
+      .eq("id", imovelId);
+
+    if (updateError) {
+      console.error("Erro ao atualizar imóvel:", updateError);
+      return NextResponse.json({
+        success: false,
+        error: "Erro ao marcar imóvel como publicado",
+        detalhe: updateError.message,
+      }, { status: 500 });
     }
 
     const resultado = await enviarParaGrupo(supabase, imovel as Record<string, unknown>, grupo);
