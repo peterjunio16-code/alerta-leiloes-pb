@@ -79,12 +79,12 @@ export default async function ImovelPage({ params, searchParams }: Props) {
               ⭐ Assinante Radar PB
             </span>
           ) : (
-            <Link
-              href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK ?? "#"}
-              className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-semibold transition-colors"
+            <a
+              href="/radar"
+              className="text-xs bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1.5 rounded-lg font-semibold transition-colors"
             >
-              📲 Entrar no grupo grátis
-            </Link>
+              ⭐ Radar PB
+            </a>
           )}
         </div>
       </nav>
@@ -242,20 +242,20 @@ export default async function ImovelPage({ params, searchParams }: Props) {
           </div>
         ) : (
           <div className="bg-gradient-to-r from-[#e63946]/20 to-[#0f3460]/40 border border-[#e63946]/30 rounded-xl p-6 text-center">
-            <h2 className="text-white font-bold text-lg mb-2">Receba alertas de leilões antes de todo mundo</h2>
-            <p className="text-[#a0a0a0] text-sm mb-4">
-              Alertas gratuitos via WhatsApp com score de oportunidade, análise de riscos e link direto para o edital.
+            <h2 className="text-white font-bold text-lg mb-2">Quer arrematar com segurança?</h2>
+            <p className="text-[#a0a0a0] text-sm mb-5">
+              Acesse análise completa, score de risco e acompanhamento especializado do edital até o arrematamento.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <a
-                href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK ?? "#"}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition-colors"
+                href="/mentoria"
+                className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-xl transition-colors"
               >
-                📲 Entrar no grupo grátis
+                🎓 Conhecer a Mentoria
               </a>
               <a
                 href="/radar"
-                className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-xl transition-colors"
+                className="bg-[#0f3460] hover:bg-[#1a4a8a] text-white font-bold py-3 px-8 rounded-xl transition-colors border border-[#e63946]/40"
               >
                 ⭐ Radar PB (análise completa)
               </a>
