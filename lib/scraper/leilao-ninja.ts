@@ -145,7 +145,6 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
   });
   const page = await context.newPage();
-  const detailPage = await context.newPage(); // Página separada para detalhes
 
   const items: LeilaoNinjaItem[] = [];
   const errors: string[] = [];
@@ -251,12 +250,8 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
             if (match) dataLeilao = `${match[3]}-${match[2]}-${match[1]}`;
           }
 
-          // Visita a página do imóvel no LeilãoNinja para pegar o link público do leiloeiro
-          let edital_url: string | undefined;
-          if (l.link) {
-            edital_url = await extractLeiloeiroUrl(detailPage, l.link);
-          }
-
+          // edital_url é enriquecido depois via enrichEditalUrls() — não visita cada página
+          // individualmente aqui pois causaria timeout no Vercel (cada visita ~5s × N imóveis)
           items.push({
             titulo: l.titulo,
             cidade,
