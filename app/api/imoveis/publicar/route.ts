@@ -14,10 +14,12 @@ function fmt(n: number) {
 /**
  * Retorna o suffix dinâmico para o botão URL do WhatsApp.
  * O template tem base URL: https://alerta-leiloes-pb.vercel.app/
- * então o suffix é: imoveis/<id>
+ * Gratuito: imoveis/<id>
+ * Radar:    imoveis/<id>?ref=radar  (esconde CTA gratuito na página)
  */
-function imovelSuffix(imovel: Record<string, unknown>): string {
-  return `imoveis/${imovel.id as string}`;
+function imovelSuffix(imovel: Record<string, unknown>, ref?: "radar"): string {
+  const base = `imoveis/${imovel.id as string}`;
+  return ref ? `${base}?ref=${ref}` : base;
 }
 
 function paramsGratuito(imovel: Record<string, unknown>): { body: string[]; urlSuffix: string } {
@@ -44,7 +46,7 @@ function paramsRadar(imovel: Record<string, unknown>): { body: string[]; urlSuff
     : "Em breve";
   return {
     body: [String(imovel.titulo ?? "Imóvel em leilão"), cidade, avaliacao, lance, desconto, score, data],
-    urlSuffix: imovelSuffix(imovel),
+    urlSuffix: imovelSuffix(imovel, "radar"),
   };
 }
 

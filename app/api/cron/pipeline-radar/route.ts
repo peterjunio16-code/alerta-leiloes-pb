@@ -164,7 +164,7 @@ async function rodarPipeline() {
     const data = imovel.data_leilao
       ? new Date(imovel.data_leilao).toLocaleDateString("pt-BR")
       : "Em breve";
-    const suffix = `imoveis/${imovel.id}`;
+    const suffix = `imoveis/${imovel.id}?ref=radar`;
 
     let notificados = 0;
     let erros = 0;
