@@ -126,7 +126,7 @@ async function rodarGratuito() {
     const editalUrl: string | null = imovel.edital_url ?? null;
     const isCaixa = editalUrl && (editalUrl.includes("caixa.gov.br") || editalUrl.includes("venda-imoveis"));
     const caixaLine = isCaixa ? `\n🏦 Caixa CEF: ${editalUrl}` : "";
-    const msgGratuito = `🏠 *Novo leilão na Paraíba*\n\n${tipoImovel} em *${imovel.cidade}*${imovel.bairro ? ` — ${imovel.bairro}` : ""}\n📉 Desconto estimado: *${faixaDesconto}*\n💰 Lance a partir de *${fmt(imovel.lance_inicial ?? 0)}*${caixaLine}\n\n⭐ *Quer ver score, risco e análise completa?*\nAssine o Radar PB: ${radar}\n\n_Análise informativa. Não substitui advogado ou avaliação individual do edital._`;
+    const msgGratuito = `🏠 *Novo leilão na Paraíba* [v3]\n\n${tipoImovel} em *${imovel.cidade}*${imovel.bairro ? ` — ${imovel.bairro}` : ""}\n📉 Desconto estimado: *${faixaDesconto}*\n💰 Lance a partir de *${fmt(imovel.lance_inicial ?? 0)}*${caixaLine}\n\n⭐ *Quer ver score, risco e análise completa?*\nAssine o Radar PB: ${radar}\n\n_Análise informativa. Não substitui advogado ou avaliação individual do edital._`;
 
     for (const numero of numerosGratuitos) {
       try {

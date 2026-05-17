@@ -60,7 +60,7 @@ function msgTextoGratuito(imovel: Record<string, unknown>): string {
   const editalUrl = (imovel.edital_url as string | null);
   const isCaixa = editalUrl && (editalUrl.includes("caixa.gov.br") || editalUrl.includes("venda-imoveis"));
   const caixaLine = isCaixa ? `\n🏦 Caixa CEF: ${editalUrl}` : "";
-  return `🏠 *Novo leilão na Paraíba*\n\n${tipoImovel} em *${cidade}*\n📉 Desconto estimado: *${faixaDesconto}*\n💰 Lance a partir de *${p.body[2]}*\n📅 Leilão: ${p.body[4]}${caixaLine}\n\n⭐ *Quer ver score, risco e análise completa?*\nAssine o Radar PB: ${radar}\n\n_Análise informativa. Não substitui advogado ou avaliação individual do edital._`;
+  return `🏠 *Novo leilão na Paraíba* [v3]\n\n${tipoImovel} em *${cidade}*\n📉 Desconto estimado: *${faixaDesconto}*\n💰 Lance a partir de *${p.body[2]}*\n📅 Leilão: ${p.body[4]}${caixaLine}\n\n⭐ *Quer ver score, risco e análise completa?*\nAssine o Radar PB: ${radar}\n\n_Análise informativa. Não substitui advogado ou avaliação individual do edital._`;
 }
 
 function msgTextoRadar(imovel: Record<string, unknown>): string {
