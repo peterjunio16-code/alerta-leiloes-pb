@@ -56,7 +56,11 @@ function msgTextoGratuito(imovel: Record<string, unknown>): string {
   const descontoNum = Number(imovel.desconto ?? 0);
   const faixaDesconto = descontoNum >= 40 ? "acima de 40%" : descontoNum >= 25 ? "entre 25% e 40%" : "abaixo de 25%";
   const radar = `${APP_URL}/radar`;
-  return `🏠 *Novo leilão na Paraíba*\n\n${tipoImovel} em *${cidade}*\n📉 Desconto estimado: *${faixaDesconto}*\n💰 Lance a partir de *${p.body[2]}*\n📅 Leilão: ${p.body[4]}\n\n⭐ *Quer ver score, risco e análise completa?*\nAssine o Radar PB: ${radar}\n\n_Análise informativa. Não substitui advogado ou avaliação individual do edital._`;
+  // Mostra link da Caixa CEF se disponível (URL pública, não exige login)
+  const editalUrl = (imovel.edital_url as string | null);
+  const isCaixa = editalUrl && (editalUrl.includes("caixa.gov.br") || editalUrl.includes("venda-imoveis"));
+  const caixaLine = isCaixa ? `\n🏦 Caixa CEF: ${editalUrl}` : "";
+  return `🏠 *Novo leilão na Paraíba*\n\n${tipoImovel} em *${cidade}*\n📉 Desconto estimado: *${faixaDesconto}*\n💰 Lance a partir de *${p.body[2]}*\n📅 Leilão: ${p.body[4]}${caixaLine}\n\n⭐ *Quer ver score, risco e análise completa?*\nAssine o Radar PB: ${radar}\n\n_Análise informativa. Não substitui advogado ou avaliação individual do edital._`;
 }
 
 function msgTextoRadar(imovel: Record<string, unknown>): string {
@@ -162,9 +166,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Imóvel não encontrado" }, { status: 404 });
     }
 
+    const agora = new Date().toISOString();
+
+    // Marca os campos de envio para que os crons não re-enviem o mesmo imóvel
+    // pipeline-gratuito: exige enviado_radar_em != null
+    // pipeline-radar:    exige status = "pendente"
+    const update: Record<string, string> = { status: "publicado", grupo_destino: grupo };
+    if (grupo === "radar" || grupo === "ambos") {
+      update.enviado_radar_em = agora;   // bloqueia pipeline-gratuito de re-enviar
+    }
+    if (grupo === "gratuito" || grupo === "ambos") {
+      update.enviado_gratuito_em = agora; // bloqueia re-envio para gratuito
+    }
+
     await supabase
       .from("imoveis")
-      .update({ status: "publicado", grupo_destino: grupo })
+      .update(update)
       .eq("id", imovelId);
 
     const resultado = await enviarParaGrupo(supabase, imovel as Record<string, unknown>, grupo);
