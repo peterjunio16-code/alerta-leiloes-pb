@@ -140,6 +140,20 @@ async function rodarPipeline() {
   // ── 5. Envia para cada imóvel ────────────────────────────────────
   let enviados = 0;
   for (const imovel of candidatos) {
+    // LOCK OTIMISTA: marca como enviado ANTES de mandar — evita race condition
+    // Se outro processo já marcou, o update retorna 0 linhas e pulamos
+    const { count } = await supabase
+      .from("imoveis")
+      .update({ enviado_radar_em: new Date().toISOString(), status: "publicado", grupo_destino: "radar" })
+      .eq("id", imovel.id)
+      .is("enviado_radar_em", null)
+      .select("id", { count: "exact", head: true });
+
+    if (!count || count === 0) {
+      log.push(`  ⚠️ Imóvel já processado por outro worker: ${imovel.titulo.slice(0, 40)}`);
+      continue;
+    }
+
     log.push(`[${ts()}] 📨 Enviando: ${imovel.titulo.slice(0, 50)} (score ${imovel.score})`);
 
     const lance = fmt(imovel.lance_inicial);
@@ -166,9 +180,10 @@ async function rodarPipeline() {
         } catch {
           // Fallback texto livre — inclui link do leiloeiro (exclusivo Radar)
           const link = `${APP_URL}/imoveis/${imovel.id}`;
-          const leiloeiroLine = imovel.edital_url
-            ? `\n🏛️ Leiloeiro: ${imovel.edital_url}`
-            : "";
+          // Filtra URLs do LeilaoNinja (link interno — requer login)
+          const editalPublico = imovel.edital_url && !imovel.edital_url.includes("leilaoninja.com")
+            ? imovel.edital_url : null;
+          const leiloeiroLine = editalPublico ? `\n🏛️ Leiloeiro: ${editalPublico}` : "";
           await sendWhatsAppMessage(numero,
             `🔐 *RADAR PB — EXCLUSIVO*\n\n⭐ Score: ${score}/10\n\n🏠 *${imovel.titulo}*\n📍 ${cidade}\n\n💰 Avaliação: ${avaliacao}\n⚡ Lance mín: ${lance}\n📉 ${desconto}%\n📅 ${data}\n\n🔗 ${link}${leiloeiroLine}\n\n_Você recebe antes do grupo gratuito por ser assinante Radar PB_`
           );
@@ -180,15 +195,7 @@ async function rodarPipeline() {
       await new Promise((r) => setTimeout(r, 400));
     }
 
-    // Marca como enviado ao Radar
-    await supabase
-      .from("imoveis")
-      .update({
-        enviado_radar_em: new Date().toISOString(),
-        status: "publicado",
-        grupo_destino: "radar",
-      })
-      .eq("id", imovel.id);
+    // (enviado_radar_em já foi marcado no lock otimista acima)
 
     enviados++;
     log.push(`  ✅ ${notificados} notificados, ${erros} erros`);

@@ -92,6 +92,19 @@ async function rodarGratuito() {
   let enviados = 0;
 
   for (const imovel of pendentes) {
+    // LOCK OTIMISTA: marca antes de enviar — evita duplicata por race condition
+    const { count } = await supabase
+      .from("imoveis")
+      .update({ enviado_gratuito_em: new Date().toISOString(), grupo_destino: "ambos" })
+      .eq("id", imovel.id)
+      .is("enviado_gratuito_em", null)
+      .select("id", { count: "exact", head: true });
+
+    if (!count || count === 0) {
+      log.push(`  ⚠️ Imóvel já processado por outro worker: ${imovel.titulo.slice(0, 40)}`);
+      continue;
+    }
+
     log.push(`[${ts()}] 📨 Enviando ao gratuito: ${imovel.titulo.slice(0, 50)}`);
 
     const lance = fmt(imovel.lance_inicial);
@@ -105,24 +118,15 @@ async function rodarGratuito() {
     let notificados = 0;
     let erros = 0;
 
+    const radar = `${APP_URL}/radar`;
+    const descontoNum = Number(imovel.desconto ?? 0);
+    const faixaDesconto = descontoNum >= 40 ? "acima de 40%" : descontoNum >= 25 ? "entre 25% e 40%" : "abaixo de 25%";
+    const tipoImovel = imovel.tipo_imovel ?? "Imóvel";
+    const msgGratuito = `🏠 *Novo leilão na Paraíba*\n\n${tipoImovel} em *${imovel.cidade}*${imovel.bairro ? ` — ${imovel.bairro}` : ""}\n📉 Desconto estimado: *${faixaDesconto}*\n\n⭐ *Quer ver score, risco e análise completa?*\nAssine o Radar PB: ${radar}\n\n_Análise informativa. Não substitui advogado ou avaliação individual do edital._`;
+
     for (const numero of numerosGratuitos) {
       try {
-        try {
-          await sendWhatsAppTemplate(
-            numero, "alerta_imovel_gratuito", "pt_BR",
-            [String(imovel.titulo), cidade, lance, desconto, data],
-            [suffix]
-          );
-        } catch {
-          // Gratuito recebe teaser — não os mesmos detalhes do Radar
-          const radar = `${APP_URL}/radar`;
-          const descontoNum = Number(imovel.desconto ?? 0);
-          const faixaDesconto = descontoNum >= 40 ? "acima de 40%" : descontoNum >= 25 ? "entre 25% e 40%" : "abaixo de 25%";
-          const tipoImovel = imovel.tipo_imovel ?? "Imóvel";
-          await sendWhatsAppMessage(numero,
-            `🏠 *Novo imóvel encontrado na Paraíba*\n\n${tipoImovel} em ${imovel.cidade} com lance abaixo da avaliação.\n\n📉 Desconto estimado: *${faixaDesconto}*\n⚠️ _Análise informativa. Imóveis de leilão podem ter riscos jurídicos, ocupação ou débitos._\n\n⭐ *Quer ver score, risco, ocupação e análise completa?*\nAssine o Radar PB:\n${radar}`
-          );
-        }
+        await sendWhatsAppMessage(numero, msgGratuito);
         notificados++;
       } catch {
         erros++;
@@ -130,14 +134,7 @@ async function rodarGratuito() {
       await new Promise((r) => setTimeout(r, 400));
     }
 
-    // Atualiza status
-    await supabase
-      .from("imoveis")
-      .update({
-        enviado_gratuito_em: new Date().toISOString(),
-        grupo_destino: "ambos",
-      })
-      .eq("id", imovel.id);
+    // (enviado_gratuito_em já foi marcado no lock otimista acima)
 
     enviados++;
     log.push(`  ✅ ${notificados} notificados, ${erros} erros`);
