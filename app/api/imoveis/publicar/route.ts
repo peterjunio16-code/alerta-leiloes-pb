@@ -4,6 +4,9 @@ import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp/client
 
 type Grupo = "gratuito" | "radar" | "ambos";
 
+// Remove espaços e barra final do URL (evita URL quebrada como "vercel.app/ /radar")
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "https://alerta-leiloes-pb.vercel.app").trim().replace(/\/$/, "");
+
 function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 });
 }
@@ -45,18 +48,25 @@ function paramsRadar(imovel: Record<string, unknown>): { body: string[]; urlSuff
   };
 }
 
-// Fallback em texto livre (funciona apenas dentro da janela de 24h)
+// Fallback em texto livre — usa SEMPRE a URL interna do app (nunca link externo que exige login)
 function msgTextoGratuito(imovel: Record<string, unknown>): string {
   const p = paramsGratuito(imovel);
-  const link = (imovel.link as string) ?? `${process.env.NEXT_PUBLIC_APP_URL}/grupo`;
-  const radar = `${process.env.NEXT_PUBLIC_APP_URL}/radar`;
-  return `🏠 *Alerta Leilões PB*\n\n📍 *${p.body[0]}*\n📌 ${p.body[1]}\n💰 Lance a partir de *${p.body[2]}*\n📉 Desconto: *${p.body[3]}%*\n📅 Leilão: ${p.body[4]}\n🔗 ${link}\n\n━━━━━━━━━\nAnálise completa: ${radar}`;
+  const tipoImovel = (imovel.tipo_imovel as string) ?? "Imóvel";
+  const cidade = `${imovel.cidade ?? "PB"}${imovel.bairro ? ` — ${imovel.bairro}` : ""}`;
+  const descontoNum = Number(imovel.desconto ?? 0);
+  const faixaDesconto = descontoNum >= 40 ? "acima de 40%" : descontoNum >= 25 ? "entre 25% e 40%" : "abaixo de 25%";
+  const radar = `${APP_URL}/radar`;
+  return `🏠 *Novo leilão na Paraíba*\n\n${tipoImovel} em *${cidade}*\n📉 Desconto estimado: *${faixaDesconto}*\n💰 Lance a partir de *${p.body[2]}*\n📅 Leilão: ${p.body[4]}\n\n⭐ *Quer ver score, risco e análise completa?*\nAssine o Radar PB: ${radar}\n\n_Análise informativa. Não substitui advogado ou avaliação individual do edital._`;
 }
 
 function msgTextoRadar(imovel: Record<string, unknown>): string {
   const p = paramsRadar(imovel);
-  const link = (imovel.link as string) ?? `${process.env.NEXT_PUBLIC_APP_URL}/radar`;
-  return `🎯 *RADAR PB*\n\n🏘️ *${p.body[0]}*\n📍 ${p.body[1]}\n💰 Avaliação: ${p.body[2]} → Lance: *${p.body[3]}*\n📉 ${p.body[4]}% | ⭐ Score: *${p.body[5]}/10*\n📅 ${p.body[6]}\n🔗 ${link}`;
+  const link = `${APP_URL}/imoveis/${imovel.id as string}`;
+  // Filtra URLs do LeilaoNinja (exigem login — inúteis para o lead)
+  const editalPublico = (imovel.edital_url as string | null);
+  const editalValido = editalPublico && !editalPublico.includes("leilaoninja.com") ? editalPublico : null;
+  const leiloeiroLine = editalValido ? `\n🏛️ Leiloeiro: ${editalValido}` : "";
+  return `🔐 *RADAR PB — EXCLUSIVO*\n\n⭐ Score: ${p.body[5]}/10\n\n🏠 *${p.body[0]}*\n📍 ${p.body[1]}\n\n💰 Avaliação: ${p.body[2]}\n⚡ Lance mín: ${p.body[3]}\n📉 ${p.body[4]}%\n📅 ${p.body[6]}\n\n🔗 ${link}${leiloeiroLine}\n\n_Você recebe antes do grupo gratuito por ser assinante Radar PB_`;
 }
 
 type EnvioResult = {
