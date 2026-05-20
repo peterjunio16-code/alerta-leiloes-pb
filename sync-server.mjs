@@ -202,6 +202,81 @@ async function sync(maxPages = 20) {
   return { saved, skipped, errors };
 }
 
+// Caixa CEF — scraper via API pública (só funciona em IP residencial)
+async function syncCaixa(maxPages = 10) {
+  const items = [];
+  const errors = [];
+  let totalFound = 0;
+
+  try {
+    for (let pageNum = 0; pageNum < maxPages; pageNum++) {
+      const url = new URL("https://venda.caixa.gov.br/portalimoveiscef/rest/imoveis/listaimoveis");
+      url.searchParams.set("tipoBusca", "LISTA");
+      url.searchParams.set("uf", "PB");
+      url.searchParams.set("page", String(pageNum));
+      url.searchParams.set("size", "50");
+      url.searchParams.set("sort", "preco,ASC");
+
+      const res = await fetch(url.toString(), {
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Referer": "https://venda.caixa.gov.br/",
+        },
+      });
+
+      if (!res.ok) {
+        errors.push(`Caixa HTTP ${res.status} na página ${pageNum}`);
+        break;
+      }
+
+      const data = await res.json();
+      const list = data.content ?? data.imoveis ?? [];
+      if (list.length === 0) break;
+      totalFound += list.length;
+
+      for (const im of list) {
+        const lance = Number(im.valor ?? im.preco ?? 0);
+        const avaliacao = Number(im.valorAvaliacao ?? 0);
+        if (!lance) continue;
+        const desconto = avaliacao > lance ? Math.round(((avaliacao - lance) / avaliacao) * 100) : undefined;
+        const link = `https://venda.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel=${im.codigoImovel ?? im.numeroImovel}`;
+        items.push({
+          titulo: `${im.tipoImovel ?? "Imóvel"} — ${im.bairro ?? im.endereco ?? "PB"}`,
+          cidade: im.municipio ?? im.cidade ?? "PB",
+          bairro: im.bairro ?? undefined,
+          endereco: im.endereco ?? undefined,
+          lance_inicial: lance,
+          valor_avaliacao: avaliacao || undefined,
+          desconto,
+          link,
+          imagem_url: im.foto ?? undefined,
+          tipo_imovel: im.tipoImovel ?? undefined,
+          modalidade: im.modalidade ?? "Venda Direta",
+          edital_url: link,
+          fonte: "caixa",
+        });
+      }
+      console.log(`  Caixa p${pageNum}: ${list.length} imóveis (total: ${items.length})`);
+    }
+  } catch (err) {
+    errors.push(`Erro Caixa: ${err.message}`);
+  }
+
+  let saved = 0, skipped = 0;
+  for (const item of items) {
+    if (item.link) {
+      const { data: ex } = await supabase.from("imoveis").select("id").eq("link", item.link).maybeSingle();
+      if (ex) { skipped++; continue; }
+    }
+    const { error } = await supabase.from("imoveis").insert({ ...item, status: "pendente", grupo_destino: "gratuito" });
+    if (error) errors.push(`Erro salvar "${item.titulo}": ${error.message}`);
+    else saved++;
+  }
+
+  return { saved, skipped, errors, total_found: totalFound };
+}
+
 const server = createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
@@ -211,10 +286,44 @@ const server = createServer(async (req, res) => {
   if (req.url === "/ping") { res.writeHead(200); res.end("ok"); return; }
 
   if (req.url === "/sync" && req.method === "POST") {
-    console.log("Iniciando sincronização...");
+    console.log("[LeilãoNinja] Iniciando sincronização...");
     try {
       const result = await sync(20);
-      console.log("Resultado:", result);
+      console.log("[LeilãoNinja] Resultado:", result);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ errors: [err.message] }));
+    }
+    return;
+  }
+
+  if (req.url === "/sync-caixa" && req.method === "POST") {
+    console.log("[Caixa CEF] Iniciando sincronização...");
+    try {
+      const result = await syncCaixa(10);
+      console.log("[Caixa CEF] Resultado:", result);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ errors: [err.message] }));
+    }
+    return;
+  }
+
+  if (req.url === "/sync-all" && req.method === "POST") {
+    console.log("[ALL] Iniciando LeilãoNinja + Caixa...");
+    try {
+      const [ninja, caixa] = await Promise.all([sync(20), syncCaixa(10)]);
+      const result = {
+        saved: (ninja.saved ?? 0) + (caixa.saved ?? 0),
+        skipped: (ninja.skipped ?? 0) + (caixa.skipped ?? 0),
+        errors: [...(ninja.errors ?? []), ...(caixa.errors ?? [])],
+        ninja, caixa,
+      };
+      console.log("[ALL] Resultado:", result);
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(result));
     } catch (err) {

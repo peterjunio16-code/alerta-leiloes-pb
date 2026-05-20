@@ -235,18 +235,39 @@ export default function ImoveisPage() {
   const handleSyncCaixa = async () => {
     setSyncingCaixa(true);
     setSyncResult(null);
+
+    // Tenta servidor local primeiro (Caixa bloqueia IPs da Vercel — só funciona local)
+    let usedLocal = false;
     try {
-      const res = await fetch("/api/admin/scraper/caixa", {
+      const localRes = await fetch("http://localhost:3100/sync-caixa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ maxPages: 10 }),
-        signal: AbortSignal.timeout(120000),
+        signal: AbortSignal.timeout(10000),
       });
-      const data = await res.json();
-      setSyncResult(data);
-      await carregarImoveis();
-    } catch (err) {
-      setSyncResult({ errors: ["Erro Caixa: " + (err instanceof Error ? err.message : "tente novamente")] });
+      if (localRes.ok) {
+        const data = await localRes.json();
+        setSyncResult(data);
+        await carregarImoveis();
+        usedLocal = true;
+      }
+    } catch {
+      // local offline — tenta Vercel (provavelmente vai falhar com IP bloqueado)
+    }
+
+    if (!usedLocal) {
+      try {
+        const res = await fetch("/api/admin/scraper/caixa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ maxPages: 10 }),
+          signal: AbortSignal.timeout(120000),
+        });
+        const data = await res.json();
+        setSyncResult(data);
+        await carregarImoveis();
+      } catch (err) {
+        setSyncResult({ errors: ["Erro Caixa: " + (err instanceof Error ? err.message : "tente novamente") + " — inicie o servidor local (iniciar-servidor.bat) pra Caixa funcionar"] });
+      }
     }
     setSyncingCaixa(false);
   };
