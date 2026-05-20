@@ -1,9 +1,21 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/Card";
+import { cookies } from "next/headers";
+import { decodeSession } from "@/lib/admin/users";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
+  // imoveis_only não acessa o dashboard — vai direto para /admin/imoveis
+  const cookie = cookies().get("alerta_admin_session");
+  if (cookie?.value) {
+    const session = decodeSession(cookie.value);
+    if (session?.role === "imoveis_only") {
+      redirect("/admin/imoveis");
+    }
+  }
+
   const supabase = createServiceClient();
 
   const [leads, assinantes, aplicacoes, imoveis] = await Promise.all([

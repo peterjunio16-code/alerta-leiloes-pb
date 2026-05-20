@@ -16,7 +16,7 @@ const navItems: NavItem[] = [
   { href: "/admin/blog",         label: "Blog",             icon: "✍️", roles: ["super_admin","editor"] },
   { href: "/admin/templates",    label: "Templates WA",     icon: "💬", roles: ["super_admin"] },
   { href: "/admin/usuarios",     label: "Usuários",         icon: "🔐", roles: ["super_admin"] },
-  { href: "/admin/sistema",      label: "Manual do Sistema", icon: "📖", roles: ["super_admin","editor","viewer","imoveis_only"] },
+  { href: "/admin/sistema",      label: "Manual do Sistema", icon: "📖", roles: ["super_admin","editor","viewer"] },
 ];
 
 const ROLE_LABELS: Record<AdminRole, string> = {
