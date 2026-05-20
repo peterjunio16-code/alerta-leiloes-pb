@@ -263,7 +263,6 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
             link: l.link || undefined,
             imagem_url: l.imgSrc,
             data_leilao: dataLeilao,
-            edital_url,
           });
           if (l.link) knownLinks.add(l.link); // Evita duplicata dentro da mesma sessão
         }
