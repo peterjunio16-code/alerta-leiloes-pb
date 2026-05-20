@@ -232,45 +232,9 @@ export default function ImoveisPage() {
     setSyncing(false);
   };
 
-  const handleSyncCaixa = async () => {
-    setSyncingCaixa(true);
-    setSyncResult(null);
-
-    // Tenta servidor local primeiro (Caixa bloqueia IPs da Vercel — só funciona local)
-    let usedLocal = false;
-    try {
-      const localRes = await fetch("http://localhost:3100/sync-caixa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(10000),
-      });
-      if (localRes.ok) {
-        const data = await localRes.json();
-        setSyncResult(data);
-        await carregarImoveis();
-        usedLocal = true;
-      }
-    } catch {
-      // local offline — tenta Vercel (provavelmente vai falhar com IP bloqueado)
-    }
-
-    if (!usedLocal) {
-      try {
-        const res = await fetch("/api/admin/scraper/caixa", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ maxPages: 10 }),
-          signal: AbortSignal.timeout(120000),
-        });
-        const data = await res.json();
-        setSyncResult(data);
-        await carregarImoveis();
-      } catch (err) {
-        setSyncResult({ errors: ["Erro Caixa: " + (err instanceof Error ? err.message : "tente novamente") + " — inicie o servidor local (iniciar-servidor.bat) pra Caixa funcionar"] });
-      }
-    }
-    setSyncingCaixa(false);
-  };
+  // (handleSyncCaixa removido — API da Caixa CEF foi descontinuada em 2026.
+  //  Domínio venda.caixa.gov.br não resolve mais via DNS. Vai voltar quando
+  //  encontrarmos endpoint novo ou integrarmos via leiloeiros parceiros.)
 
   const handleScoreLote = async () => {
     setScoringLote(true);
@@ -412,13 +376,6 @@ export default function ImoveisPage() {
           <Button variant="secondary" loading={syncing} onClick={handleSync}>
             🔄 LeilãoNinja
           </Button>
-          <button
-            onClick={handleSyncCaixa}
-            disabled={syncingCaixa}
-            className="text-xs px-3 py-2 bg-[#0f3460] hover:bg-[#1a4a8a] text-[#a0a0a0] hover:text-white font-medium rounded-lg disabled:opacity-50 transition-colors"
-          >
-            🏦 Só Caixa CEF
-          </button>
           <button
             onClick={handleScoreLote}
             disabled={scoringLote}
