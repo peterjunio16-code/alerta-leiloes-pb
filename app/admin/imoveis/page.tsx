@@ -242,7 +242,10 @@ export default function ImoveisPage() {
     try {
       const res = await fetch("/api/admin/imoveis/batch/score", { method: "PUT" });
       const data = await res.json();
-      setScoreLoteResult(`🤖 ${data.analisados ?? 0} imóveis analisados pela IA`);
+      const msg = data.message
+        ? `🤖 ${data.message}${data.falhas ? ` (${data.falhas} falhas)` : ""}`
+        : `🤖 ${data.analisados ?? 0} imóveis analisados pela IA`;
+      setScoreLoteResult(msg);
       await carregarImoveis();
     } catch (err) {
       setScoreLoteResult("❌ Erro ao gerar scores: " + (err instanceof Error ? err.message : "tente novamente"));

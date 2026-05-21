@@ -148,6 +148,8 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
 
   const items: LeilaoNinjaItem[] = [];
   const errors: string[] = [];
+  let cardsSeen = 0;       // total de cards encontrados nas páginas (incluindo duplicatas)
+  let cardsDuplicate = 0;  // cards que já existiam no banco
 
   // Base URL: João Pessoa (98), Paraíba (20), leilões ativos, mais recentes
   const BASE_SEARCH =
@@ -212,6 +214,7 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
 
         const rawListings = await extractCardsFromPage(page);
         if (rawListings.length === 0) break;
+        cardsSeen += rawListings.length;
 
         let consecutiveDuplicates = 0;
 
@@ -222,6 +225,7 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
           // Se o link já existe no banco, conta como duplicata
           if (l.link && knownLinks.has(l.link)) {
             consecutiveDuplicates++;
+            cardsDuplicate++;
             if (consecutiveDuplicates >= STOP_AFTER_DUPLICATES) {
               console.log(`Encontrados ${STOP_AFTER_DUPLICATES} duplicatas seguidas na página ${pageNum} — parando.`);
               stopScraping = true;
@@ -277,7 +281,14 @@ export async function scrapeLeilaoNinja(maxPages = 50): Promise<{
   }
 
   if (items.length === 0 && errors.length === 0) {
-    errors.push("Nenhum imóvel encontrado. Verifique o login e se há leilões ativos em João Pessoa/PB.");
+    if (cardsSeen === 0) {
+      errors.push("Nenhum card encontrado nas páginas. Verifique o login e se há leilões ativos em João Pessoa/PB.");
+    } else if (cardsDuplicate === cardsSeen) {
+      // Não é erro — apenas informa que tudo já está no banco
+      errors.push(`Todos os ${cardsSeen} imóveis encontrados já estão no banco (duplicatas). Nada novo para salvar.`);
+    } else {
+      errors.push(`${cardsSeen} cards encontrados mas nenhum válido para salvar (faltam dados como lance, título ou imagem).`);
+    }
   }
 
   // 4. Salva no Supabase (deduplica por link)

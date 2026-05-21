@@ -15,16 +15,36 @@ export async function PUT(_request: NextRequest) {
 
   const supabase = createServiceClient();
 
+  // Verifica quantos existem no total (pra dar feedback claro)
+  const { count: totalPendentes } = await supabase
+    .from("imoveis")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pendente");
+
+  const { count: jaAnalisados } = await supabase
+    .from("imoveis")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pendente")
+    .not("analise_ia", "is", null);
+
+  // Limita a 25 por rodada (5 min de timeout / ~12s por imóvel = ~25 com folga)
   const { data: imoveis } = await supabase
     .from("imoveis")
     .select("id, titulo, cidade, bairro, lance_inicial, valor_avaliacao, desconto, tipo_imovel, modalidade, ocupado, data_leilao, processo_numero")
     .eq("status", "pendente")
     .is("analise_ia", null)
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(25);
 
   if (!imoveis?.length) {
-    return NextResponse.json({ message: "Nenhum imóvel pendente sem análise IA", analisados: 0 });
+    return NextResponse.json({
+      message: totalPendentes === jaAnalisados
+        ? `Todos os ${totalPendentes} imóveis pendentes já têm análise IA.`
+        : "Nenhum imóvel pendente sem análise IA",
+      analisados: 0,
+      total_pendentes: totalPendentes ?? 0,
+      ja_analisados: jaAnalisados ?? 0,
+    });
   }
 
   const results: { id: string; titulo: string; score: number; ok: boolean; erro?: string }[] = [];
@@ -49,5 +69,18 @@ export async function PUT(_request: NextRequest) {
     await new Promise((r) => setTimeout(r, 1200));
   }
 
-  return NextResponse.json({ analisados: results.length, results });
+  const sucessos = results.filter((r) => r.ok).length;
+  const falhas = results.filter((r) => !r.ok).length;
+  const restantes = (totalPendentes ?? 0) - (jaAnalisados ?? 0) - sucessos;
+
+  return NextResponse.json({
+    analisados: sucessos,
+    falhas,
+    restantes,
+    total_pendentes: totalPendentes ?? 0,
+    message: restantes > 0
+      ? `${sucessos} analisados nesta rodada. Ainda restam ${restantes} sem análise — clique novamente para continuar.`
+      : `Todos os ${totalPendentes} imóveis foram analisados.`,
+    results,
+  });
 }
